@@ -1,0 +1,62 @@
+/* 预览框样式 */
+/* setting_item 和其他布局现在由SillyTavern的内置样式处理 */
+.setting_item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.setting_item label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.rt-status-bar-preview-box {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--bg1);
+    color: var(--text-color);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 50px;
+    max-height: 200px; /* 限制最大高度 */
+    overflow-y: auto; /* 当内容溢出时允许滚动 */
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* 隐藏滚动条的核心技巧 */
+/* 适用于 Webkit 浏览器 (Chrome, Safari) */
+.rt-status-bar-preview-box::-webkit-scrollbar {
+    display: none;
+}
+
+/* 适用于 Firefox */
+.rt-status-bar-preview-box {
+    scrollbar-width: none; /* for Firefox */
+}
+
+/* 适用于 IE/Edge */
+.rt-status-bar-preview-box {
+    -ms-overflow-style: none;  /* for Internet Explorer and Edge */
+}
+
+/* 为模型选择器和加载按钮的容器添加样式 */
+.setting_item .flex-container {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 在项目之间添加一些间隙 */
+}
+
+/* 让下拉框占据大部分可用空间 */
+.setting_item .flex-container select {
+    flex-grow: 1;
+}
+
+/* 为加载按钮设置样式 */
+#rt-status-bar-fetch-models {
+    flex-shrink: 0; /* 防止按钮被压缩 */
+    padding: 6px 10px;
+    line-height: 1; /* 确保图标垂直居中 */
+}
