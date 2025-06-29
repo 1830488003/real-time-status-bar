@@ -168,6 +168,7 @@ jQuery(async () => {
 
     let SYSTEM_PROMPT = ""; // 将在init()中从外部文件加载
     let DEFAULT_STATUS_PROMPT = ""; // 新增：用于存储默认的状态栏要求
+    let AVATAR_URLS = ""; // 新增：用于存储头像URL列表
 
     const defaultSettings = {
         enabled: true, // 默认启用插件
@@ -551,6 +552,13 @@ jQuery(async () => {
                 `**用户具体要求:**\n${settings.statusBarRequirements}`
             );
 
+            // 新增：2.2.1 添加可用的头像URL列表
+            if (AVATAR_URLS) {
+                contextParts.push(
+                    `**可用头像URL列表 (请根据角色和情景选择使用):**\n${AVATAR_URLS}`
+                );
+            }
+
             // 2.3 (可选) 添加世界书信息
             if (settings.readWorldBook) {
                 try {
@@ -843,15 +851,17 @@ jQuery(async () => {
 
         // 2. 并行异步加载所有必要的文本文件
         try {
-            const [systemPromptData, defaultStatusPromptData] =
+            const [systemPromptData, defaultStatusPromptData, avatarUrlsData] =
                 await Promise.all([
                     $.get(`${extensionFolderPath}/system_prompt.txt`),
                     $.get(`${extensionFolderPath}/default_status_prompt.txt`),
+                    $.get(`${extensionFolderPath}/头像url.txt`), // 新增加载头像URL文件
                 ]);
             SYSTEM_PROMPT = systemPromptData;
             DEFAULT_STATUS_PROMPT = defaultStatusPromptData;
+            AVATAR_URLS = avatarUrlsData; // 保存头像URL内容
             console.log(
-                `[${extensionName}] 系统提示词和默认状态要求已成功加载。`
+                `[${extensionName}] 系统提示词、默认状态要求和头像URL已成功加载。`
             );
         } catch (error) {
             console.error(
