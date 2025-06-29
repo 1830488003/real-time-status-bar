@@ -42,6 +42,30 @@
     -ms-overflow-style: none;  /* for Internet Explorer and Edge */
 }
 
+/* 版本与更新面板样式 */
+.rt-status-bar-version-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 5px;
+    background-color: var(--bg1);
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.rt-status-bar-version-panel p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.rt-status-bar-version-panel .update-indicator {
+    color: var(--warning-color);
+    font-weight: bold;
+}
+
 /* 为模型选择器和加载按钮的容器添加样式 */
 .setting_item .flex-container {
     display: flex;

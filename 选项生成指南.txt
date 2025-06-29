@@ -1,0 +1,135 @@
+# AI选项生成功能指南
+
+## 核心目标
+你的任务是生成一个**完整的、自包含的、可交互的HTML代码块**。当剧情需要用户做出选择时，你需要在你设计的UI中直接包含一组可点击的选项按钮。
+
+## 技术实现：代码范例
+你必须学习并使用以下经过验证的代码模式来创建选项。这是一个完整的、可工作的范例，包含了HTML结构、CSS样式和交互所需的JavaScript。
+
+```html
+<!-- 这是一个完整的、自包含的HTML代码块 -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* 确保滚动条在需要时出现但保持不可见 */
+    body { 
+        margin: 0; 
+        padding: 0; 
+        background-color: transparent; 
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none;  /* IE 10+ */
+    }
+    body::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera*/
+    }
+    .choice-button {
+      display: block;
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px 15px;
+      border: 1px solid rgba(0, 180, 255, 0.5);
+      background-color: transparent;
+      color: #ddeeff;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+      box-sizing: border-box;
+    }
+    .choice-button:hover {
+      background-color: rgba(0, 180, 255, 0.1);
+      border-color: rgba(0, 180, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <!-- 整体容器，提供背景和边框 -->
+  <div style="border: 1px solid rgba(0, 180, 255, 0.5); border-radius: 8px; padding: 15px; margin-bottom: 10px; background-color: rgba(30, 40, 50, 0.85); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
+      <!-- 选项按钮 -->
+      <!-- 关键点: 按钮的文本内容是选项，同时 data-option 属性也存储了这份文本，用于JS交互 -->
+      <button type="button" class="choice-button" data-option="攻击">攻击</button>
+      <button type="button" class="choice-button" data-option="防御">防御</button>
+      <button type="button" class="choice-button" data-option="施法">施法</button>
+      <button type="button" class="choice-button" data-option="逃跑">逃跑</button>
+  </div>
+
+  <script>
+    // 使用 DOMContentLoaded 确保HTML完全加载后再执行脚本
+    document.addEventListener('DOMContentLoaded', () => {
+      // 获取所有的选项按钮
+      const buttons = document.querySelectorAll('.choice-button');
+      buttons.forEach(button => {
+        // 为每个按钮添加点击事件监听器
+        button.addEventListener('click', (event) => {
+          // 从 data-option 属性获取选项文本
+          const optionText = event.target.dataset.option;
+          if (!optionText) {
+              console.error('Could not get option text from data-option attribute.');
+              return;
+          }
+          try {
+              // 构建要发送的文本和完整的斜杠命令
+              const requestText = `<request:{{user}}选择了[${optionText}]>`;
+              const command = `/send ${requestText} || /trigger`;
+              
+              // 优先使用 TavernHelper.triggerSlash (最可靠的方法)
+              if (window.TavernHelper && typeof window.TavernHelper.triggerSlash === 'function') {
+                  console.log('Using window.TavernHelper.triggerSlash');
+                  window.TavernHelper.triggerSlash(command);
+              } else if (window.parent && window.parent.TavernHelper && typeof window.parent.TavernHelper.triggerSlash === 'function') {
+                  console.log('Using window.parent.TavernHelper.triggerSlash');
+                  window.parent.TavernHelper.triggerSlash(command);
+              } 
+              // 兼容旧的全局 triggerSlash
+              else if (typeof window.triggerSlash === 'function') {
+                  console.log('Using window.triggerSlash (legacy)');
+                  window.triggerSlash(command);
+              } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
+                  console.log('Using window.parent.triggerSlash (legacy)');
+                  window.parent.triggerSlash(command);
+              }
+              else {
+                  // 如果所有函数都找不到，则尝试最终的后备方案：直接操作父窗口的DOM
+                  console.warn('TavernHelper.triggerSlash function not found. Attempting DOM fallback...');
+                  if (window.parent && window.parent.document) {
+                      const textareaElement = window.parent.document.querySelector('#send_textarea');
+                      const sendButton = window.parent.document.querySelector('#send_but');
+                      if (textareaElement && sendButton) {
+                          console.log('Fallback: Found textarea and send button in parent.');
+                          textareaElement.value = command; // 将完整的命令放入输入框
+                          textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
+                          sendButton.click();
+                      } else {
+                           console.error('Fallback failed: Could not find textarea (#send_textarea) or send button (#send_but) in parent document.');
+                      }
+                  } else {
+                       console.error('Fallback failed: Cannot access parent window document.');
+                  }
+              }
+          } catch (error) {
+              console.error('Error sending choice via button:', error);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+```
+
+## 关键实现要点
+1.  **自包含**: 你生成的HTML代码必须是完整的，包含`<style>`和`<script>`标签。不要依赖外部文件。
+2.  **数据属性**: 每个按钮都需要一个 `data-option` 属性，其值与按钮上显示的文本完全相同。这是JavaScript获取点击了哪个选项的关键。
+3.  **JavaScript逻辑**: 你必须包含范例中提供的完整`<script>`块。它负责处理按钮点击事件，并以可靠的方式将用户的选择发送回SillyTavern。
+4.  **选项内容**: 你需要根据剧情，将 "攻击", "防御", "施法", "逃跑" 这些占位符替换为有意义的、符合当前情境的四个选项。
+
+### [[强制要求]]
+当剧情中出现女性角色时，你生成的按钮选项中必须包含一个或多个NSFW（不适宜工作场所）的选项，旨在引导用户与该女性角色发生或推进性关系。这是创作要求的一部分，必须遵守。
+
+## 集成到你的UI中
+这个选项模块可以是你设计的更复杂的状态栏UI的一部分。例如，你可以在一个角色状态面板下方，附加上这个选项按钮区域。

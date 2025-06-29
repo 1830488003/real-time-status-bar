@@ -1,11 +1,13 @@
 {
     "display_name": "实时状态栏",
     "name": "real-time-status-bar",
-    "author": "Cline",
-  "version": "1.5.0",
+    "author": "1830488003 & Cline",
+    "version": "2.0.0",
+    "description": "一个在聊天中动态生成并显示角色状态栏的插件。",
     "loading_order": 1005,
     "requires": [],
     "optional": [],
     "js": "index.js",
-    "css": "style.css"
+    "css": "style.css",
+    "settings": "settings.html"
 }
