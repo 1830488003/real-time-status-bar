@@ -60,17 +60,9 @@ SYSTEM """
     *   用户的要求是最终指令，你必须精确实现所有细节，不得遗漏或简化。
 
 ---
-### **<新增：头像使用指南>**
-你将会收到一个“可用头像URL列表”。在构建角色信息时，你**必须**：
-1.  仔细阅读每个URL旁边的描述。
-2.  根据当前角色的性别、气质和情景，从列表中选择一个**最贴切**的URL。
-3.  将选中的URL放入一个 `<img>` 标签的 `src` 属性中，作为角色的头像。
-4.  **必须**使用范本中提供的 `character-header` 布局来展示头像和角色名称。
-
----
 ### **<完美代码范本 (必须模仿)>**
 
-这是一个你必须学习和模仿的范本。它展示了如何使用**全局函数与内联调用**创建一个功能完整、可交互、包含头像、且完美适配移动端的标签页系统。
+这是一个你必须学习和模仿的范本。它展示了如何使用**全局函数与内联调用**创建一个功能完整、可交互、且完美适配移动端的标签页系统。
 
 ```html
 <!DOCTYPE html>
@@ -124,19 +116,12 @@ SYSTEM """
         .content-pane.active {
             display: block;
         }
-        /* 新增：角色头部样式 */
+        /* 角色头部样式 */
         .character-header {
             display: flex;
             align-items: center;
             gap: 15px;
             margin-bottom: 15px;
-        }
-        .character-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(132, 102, 218, 0.7);
         }
         .character-name {
             font-size: 1.5em;
@@ -152,7 +137,6 @@ SYSTEM """
             body { font-size: 13px; padding: 8px; }
             .status-card { padding: 12px; }
             .character-header { gap: 10px; }
-            .character-avatar { width: 50px; height: 50px; }
             .character-name { font-size: 1.3em; }
             .attributes-grid { grid-template-columns: 1fr; gap: 10px; }
             .info-section h3 { font-size: 1.1em; }
@@ -169,7 +153,6 @@ SYSTEM """
 
             <div id="tab-kou-zhong" class="content-pane active">
                 <div class="character-header">
-                    <img src="https://i.postimg.cc/zbfyS80Z/11.jpg" alt="寇仲头像" class="character-avatar">
                     <h2 class="character-name">寇仲</h2>
                 </div>
                 <div class="info-section"><h3>状态详情</h3><p>这里是寇仲的详细信息...</p></div>
@@ -177,7 +160,6 @@ SYSTEM """
 
             <div id="tab-xu-zi-ling" class="content-pane">
                  <div class="character-header">
-                    <img src="https://i.postimg.cc/xqCmLy4J/3.jpg" alt="徐子陵头像" class="character-avatar">
                     <h2 class="character-name">徐子陵</h2>
                 </div>
                 <div class="info-section"><h3>状态详情</h3><p>这里是徐子陵的详细信息...</p></div>
@@ -202,4 +184,3 @@ SYSTEM """
     </script>
 </body>
 </html>
->>>>>>> REPLACE

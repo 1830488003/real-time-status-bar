@@ -169,7 +169,7 @@ jQuery(async () => {
 
     let SYSTEM_PROMPT = ""; // 将在init()中从外部文件加载
     let DEFAULT_STATUS_PROMPT = ""; // 新增：用于存储默认的状态栏要求
-    let AVATAR_URLS = ""; // 新增：用于存储头像URL列表
+    let AVATAR_PROMPT_GUIDE = ""; // 新增：用于存储头像提示词指南
 
     const defaultSettings = {
         enabled: true, // 默认启用插件
@@ -177,6 +177,7 @@ jQuery(async () => {
             "示例：\n请为角色创建一个状态栏，包含以下部分：\n- **核心状态**: 显示生命值（HP）和法力值（MP）。\n- **情绪**: 用一个词描述当前情绪。\n- **装备**: 列出当前装备的武器和护甲。\n- **关键物品**: 显示背包中最重要的三件物品。\n设计风格要求简洁、带有赛博朋克感，主色调为青色和品红色。",
         readWorldBook: true, // 默认读取世界书
         generateChoices: false, // 新增：默认禁用选项生成
+        useAvatar: true, // 新增：默认启用AI动态头像
         showRegenerateButton: true, // 新增：默认显示重新生成按钮
         aiSource: "tavern", // 'tavern' 或 'custom'
         apiUrl: "",
@@ -450,7 +451,8 @@ jQuery(async () => {
             "checked",
             settings.readWorldBook
         );
-        $("#rt-status-bar-generate-choices").prop("checked", settings.generateChoices); // 加载新设置
+        $("#rt-status-bar-generate-choices").prop("checked", settings.generateChoices);
+        $("#rt-status-bar-use-avatar").prop("checked", settings.useAvatar); // 加载新设置
         $("#rt-status-bar-show-regenerate-button").prop("checked", settings.showRegenerateButton);
         $("#rt-status-bar-ai-source").val(settings.aiSource);
         $("#rt-status-bar-api-url").val(settings.apiUrl);
@@ -492,7 +494,8 @@ jQuery(async () => {
         settings.readWorldBook = $("#rt-status-bar-read-worldbook").is(
             ":checked"
         );
-        settings.generateChoices = $("#rt-status-bar-generate-choices").is(":checked"); // 保存新设置
+        settings.generateChoices = $("#rt-status-bar-generate-choices").is(":checked");
+        settings.useAvatar = $("#rt-status-bar-use-avatar").is(":checked"); // 保存新设置
         settings.showRegenerateButton = $("#rt-status-bar-show-regenerate-button").is(":checked");
         settings.aiSource = $("#rt-status-bar-ai-source").val();
         settings.apiUrl = $("#rt-status-bar-api-url").val();
@@ -520,9 +523,17 @@ jQuery(async () => {
      */
     async function buildFinalPrompt(messageToProcess) {
         let contextParts = [];
-        let systemPromptContent = SYSTEM_PROMPT; // 默认使用主系统提示
+        let systemPromptContent = SYSTEM_PROMPT; // 顺序 1: 默认使用主系统提示
 
-        // (可选) 添加选项生成指南
+        // 顺序 2: (可选) 添加AI动态头像指南
+        if (settings.useAvatar) {
+            if (AVATAR_PROMPT_GUIDE) {
+                systemPromptContent += `\n\n---\n\n${AVATAR_PROMPT_GUIDE}`;
+                console.log(`[${extensionName}] 已添加“AI动态头像指南”。`);
+            }
+        }
+
+        // 顺序 3: (可选) 添加选项生成指南
         if (settings.generateChoices) {
             try {
                 const choiceGuideContent = await $.get(`${extensionFolderPath}/选项生成指南.txt`);
@@ -533,19 +544,7 @@ jQuery(async () => {
             }
         }
 
-        // 添加用户自定义要求
-        contextParts.push(
-            `**用户具体要求:**\n${settings.statusBarRequirements}`
-        );
-
-        // 添加可用的头像URL列表
-        if (AVATAR_URLS) {
-            contextParts.push(
-                `**可用头像URL列表 (请根据角色和情景选择使用):**\n${AVATAR_URLS}`
-            );
-        }
-
-        // (可选) 添加世界书信息
+        // 顺序 4: (可选) 添加世界书信息
         if (settings.readWorldBook) {
             try {
                 console.log(
@@ -604,7 +603,7 @@ jQuery(async () => {
             }
         }
 
-        // 添加触发消息作为上下文
+        // 顺序 5: 添加触发消息作为上下文
         if (messageToProcess) {
             contextParts.push(
                 `**最新对话内容:**\n${messageToProcess.name}: ${messageToProcess.message}`
@@ -617,6 +616,11 @@ jQuery(async () => {
                 `[${extensionName}] 未能获取到触发消息，无法添加对话上下文。`
             );
         }
+
+        // 顺序 6: 添加用户自定义要求
+        contextParts.push(
+            `**用户具体要求:**\n${settings.statusBarRequirements}`
+        );
 
         // 组合最终的Prompt
         const finalPrompt = `${systemPromptContent}\n\n---\n\n${contextParts.join(
@@ -917,17 +921,17 @@ jQuery(async () => {
 
         // 2. 并行异步加载所有必要的文本文件
         try {
-            const [systemPromptData, defaultStatusPromptData, avatarUrlsData] =
+            const [systemPromptData, defaultStatusPromptData, avatarPromptGuideData] =
                 await Promise.all([
                     $.get(`${extensionFolderPath}/system_prompt.txt`),
                     $.get(`${extensionFolderPath}/default_status_prompt.txt`),
-                    $.get(`${extensionFolderPath}/头像url.txt`), // 新增加载头像URL文件
+                    $.get(`${extensionFolderPath}/avatar_prompt_guide.txt`),
                 ]);
             SYSTEM_PROMPT = systemPromptData;
             DEFAULT_STATUS_PROMPT = defaultStatusPromptData;
-            AVATAR_URLS = avatarUrlsData; // 保存头像URL内容
+            AVATAR_PROMPT_GUIDE = avatarPromptGuideData;
             console.log(
-                `[${extensionName}] 系统提示词、默认状态要求和头像URL已成功加载。`
+                `[${extensionName}] 系统提示词、默认状态要求和头像指南已成功加载。`
             );
         } catch (error) {
             console.error(
@@ -957,7 +961,8 @@ jQuery(async () => {
         $("#rt-status-bar-read-worldbook").on("change", () =>
             saveSettings(false)
         );
-        $("#rt-status-bar-generate-choices").on("change", () => saveSettings(false)); // 绑定新开关的事件
+        $("#rt-status-bar-generate-choices").on("change", () => saveSettings(false));
+        $("#rt-status-bar-use-avatar").on("change", () => saveSettings(false)); // 绑定新开关的事件
         $("#rt-status-bar-show-regenerate-button").on("change", () => saveSettings(false));
         $("#rt-status-bar-ai-source").on("change", () => {
             toggleCustomApiSettings();
