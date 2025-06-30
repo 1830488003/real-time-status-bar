@@ -219,26 +219,22 @@ jQuery(async () => {
      * 使用唯一ID找到并替换占位符的内容。
      * @param {string} uniqueId - 占位符的唯一ID。
      * @param {string} replacementHtml - 用于替换的HTML内容。
+     * @param {number} messageId - 包含此状态栏的消息ID，用于删除。
      */
-    function replacePlaceholder(uniqueId, replacementHtml) {
+    function replacePlaceholder(uniqueId, replacementHtml, messageId) {
         const placeholderSpan = $(`#${uniqueId}`);
         if (placeholderSpan.length) {
-            // 1. 创建一个容器，用于相对定位和包裹所有内容
             const containerId = `rt-container-${uniqueId}`;
-            // 将AI生成的HTML包裹在一个带有新类和ID的div中
             const containerHtml = `<div id="${containerId}" class="rt-status-bar-container">${replacementHtml}</div>`;
-    
-            // 2. 用带容器的HTML替换占位符
             placeholderSpan.replaceWith(containerHtml);
             const $container = $(`#${containerId}`);
-    
-            // 3. 如果设置开启，则添加重新生成按钮
+
             if (settings.showRegenerateButton && $container.length) {
                 const regenerateButtonHtml = `<button class="rt-status-bar-regenerate-button" title="重新生成"><i class="fas fa-sync-alt"></i></button>`;
                 $container.append(regenerateButtonHtml);
-    
-                // 4. 为按钮绑定事件
-                $container.find('.rt-status-bar-regenerate-button').on('click', function() {
+
+                // 核心重构：使用传入的messageId进行删除，不再依赖DOM解析
+                $container.find('.rt-status-bar-regenerate-button').on('click', async function() {
                     if (isGenerating) {
                         toastr.warning('正在生成中，请稍候...');
                         return;
@@ -247,16 +243,27 @@ jQuery(async () => {
                         toastr.error('没有可用于重新生成的消息上下文。');
                         return;
                     }
-    
-                    // 移除旧的状态栏
-                    $container.remove();
-                    
-                    // 使用保存的上下文重新调用核心处理函数
-                    console.log(`[${extensionName}] 用户点击重新生成，使用消息 ID: ${lastMessageForRegeneration.message_id}`);
-                    handleNewMessage(lastMessageForRegeneration);
+                    if (typeof messageId === 'undefined') {
+                        toastr.error('错误：无法获取状态栏消息ID，无法删除。');
+                        return;
+                    }
+
+                    try {
+                        // 使用传入的、可靠的消息ID删除旧楼层
+                        await TavernHelper.deleteChatMessages([messageId]);
+                        console.log(`[${extensionName}] 已成功删除旧的状态栏消息 (ID: ${messageId})。`);
+                        
+                        // 删除成功后，再调用核心函数创建新的状态栏
+                        console.log(`[${extensionName}] 正在使用消息 (ID: ${lastMessageForRegeneration.message_id}) 的上下文重新生成...`);
+                        handleNewMessage(lastMessageForRegeneration);
+
+                    } catch (error) {
+                        console.error(`[${extensionName}] 删除消息时出错:`, error);
+                        toastr.error('删除旧的状态栏时发生错误。');
+                    }
                 });
             }
-    
+
             console.log(`[${extensionName}] 成功替换占位符 #${uniqueId}`);
         } else {
             console.warn(
@@ -570,6 +577,14 @@ jQuery(async () => {
             );
             console.log(`[${extensionName}] 已注入占位符: #${uniqueId}`);
 
+            // 核心修复：注入后立即获取其消息ID，用于后续的删除操作
+            const newMessages = await TavernHelper.getChatMessages(-1);
+            const placeholderMessageId = newMessages?.[0]?.message_id;
+            if (typeof placeholderMessageId === 'undefined') {
+                console.error(`[${extensionName}] 严重错误：无法获取刚创建的占位符消息ID。`);
+                toastr.error('无法获取占位符消息ID，重新生成功能可能失效。');
+            }
+
             // 2. 动态构建Prompt
             let contextParts = [];
             let systemPromptContent = SYSTEM_PROMPT; // 默认使用主系统提示
@@ -708,11 +723,11 @@ jQuery(async () => {
 
                 // 5. 替换占位符并更新预览
                 // AI现在生成的是完整的、自包含的HTML，直接使用即可
-                replacePlaceholder(uniqueId, generatedHtml);
+                replacePlaceholder(uniqueId, generatedHtml, placeholderMessageId);
                 toastr.success("实时状态栏已更新！");
             } else {
                 const errorMsg = "❌ AI未能生成有效的状态栏内容。";
-                replacePlaceholder(uniqueId, errorMsg);
+                replacePlaceholder(uniqueId, errorMsg, placeholderMessageId);
                 toastr.warning(errorMsg);
             }
         } catch (error) {
@@ -849,14 +864,21 @@ jQuery(async () => {
                     return;
                 }
 
+                const messageContent = lastMessage.message || "";
+
+                // 新增：检查并跳过由本插件自己生成的状态栏，防止无限循环
+                if (messageContent.includes('class="rt-status-bar-container"')) {
+                    return;
+                }
+
                 // 检查条件：
                 // 1. 是AI消息 (role !== 'user')
                 // 2. 消息ID是新的 (lastMessage.message_id > lastProcessedMessageId)
-                // 3. 消息内容足够长 (lastMessage.message.length > 300)
+                // 3. 消息内容足够长 (messageContent.length > 300)
                 if (
                     lastMessage.role !== "user" &&
                     lastMessage.message_id > lastProcessedMessageId &&
-                    (lastMessage.message || "").length > 300
+                    messageContent.length > 300
                 ) {
                     console.log(
                         `[${extensionName}] 轮询检测到新的、完整的AI消息 (ID: ${lastMessage.message_id}, 长度: ${lastMessage.message.length})，触发处理。`
