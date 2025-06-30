@@ -1,86 +1,99 @@
-/* 预览框样式 */
-/* setting_item 和其他布局现在由SillyTavern的内置样式处理 */
-.setting_item {
+/* 扩展设置页面的主容器 */
+.extension_settings[data-extension-name="real-time-status-bar"] .inline-drawer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 统一设置项目之间的间距 */
+}
+
+/* 设置项的通用样式 */
+.extension_settings[data-extension-name="real-time-status-bar"] .setting_item {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.setting_item label {
+/* 对于需要水平排列的设置项（如开关） */
+.extension_settings[data-extension-name="real-time-status-bar"] .flex-container {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 标签样式 */
+.extension_settings[data-extension-name="real-time-status-bar"] .setting_item label {
     font-weight: bold;
-    color: var(--text-color);
 }
 
-.rt-status-bar-preview-box {
+/* 文本输入框和选择框样式 */
+.extension_settings[data-extension-name="real-time-status-bar"] .text_pole {
     width: 100%;
-    box-sizing: border-box;
-    background-color: var(--bg1);
-    color: var(--text-color);
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 5px;
-    padding: 10px;
-    min-height: 50px;
-    max-height: 200px; /* 限制最大高度 */
-    overflow-y: auto; /* 当内容溢出时允许滚动 */
-    word-wrap: break-word;
-    white-space: pre-wrap;
 }
 
-/* 隐藏滚动条的核心技巧 */
-/* 适用于 Webkit 浏览器 (Chrome, Safari) */
-.rt-status-bar-preview-box::-webkit-scrollbar {
+/* 隐藏区域的样式 */
+.hidden {
     display: none;
 }
 
-/* 适用于 Firefox */
-.rt-status-bar-preview-box {
-    scrollbar-width: none; /* for Firefox */
-}
-
-/* 适用于 IE/Edge */
-.rt-status-bar-preview-box {
-    -ms-overflow-style: none;  /* for Internet Explorer and Edge */
-}
-
-/* 版本与更新面板样式 */
+/* 版本信息面板 */
 .rt-status-bar-version-panel {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 5px;
     background-color: var(--bg1);
+    border: 1px solid var(--border-color);
     border-radius: 5px;
-    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
 }
 
 .rt-status-bar-version-panel p {
     margin: 0;
     font-size: 0.9em;
-    color: var(--text-color);
 }
 
-.rt-status-bar-version-panel .update-indicator {
-    color: var(--warning-color);
+.update-indicator {
+    color: var(--highlight-color, #ff69b4);
     font-weight: bold;
+    margin-left: 5px;
 }
 
-/* 为模型选择器和加载按钮的容器添加样式 */
-.setting_item .flex-container {
+/* 模型加载按钮的flex容器 */
+.extension_settings[data-extension-name="real-time-status-bar"] .setting_item .flex-container {
     display: flex;
     align-items: center;
-    gap: 8px; /* 在项目之间添加一些间隙 */
+    gap: 10px;
 }
 
-/* 让下拉框占据大部分可用空间 */
-.setting_item .flex-container select {
+.extension_settings[data-extension-name="real-time-status-bar"] .setting_item .flex-container .text_pole {
     flex-grow: 1;
 }
 
-/* 为加载按钮设置样式 */
-#rt-status-bar-fetch-models {
-    flex-shrink: 0; /* 防止按钮被压缩 */
-    padding: 6px 10px;
-    line-height: 1; /* 确保图标垂直居中 */
+/* 重新生成按钮的样式 */
+.rt-status-bar-regenerate-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.rt-status-bar-regenerate-button:hover {
+    opacity: 1;
+}
+
+/* 状态栏容器，用于相对定位 */
+.rt-status-bar-container {
+    position: relative;
 }

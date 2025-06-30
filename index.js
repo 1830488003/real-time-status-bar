@@ -164,6 +164,7 @@ jQuery(async () => {
     const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
     let isGenerating = false;
     let lastProcessedMessageId = -1; // 跟踪最后处理过的AI消息ID
+    let lastMessageForRegeneration = null; // 新增：存储用于重新生成的消息
     let currentChatFileIdentifier = "unknown_chat_init"; // 跟踪当前聊天文件
 
     let SYSTEM_PROMPT = ""; // 将在init()中从外部文件加载
@@ -176,6 +177,7 @@ jQuery(async () => {
             "示例：\n请为角色创建一个状态栏，包含以下部分：\n- **核心状态**: 显示生命值（HP）和法力值（MP）。\n- **情绪**: 用一个词描述当前情绪。\n- **装备**: 列出当前装备的武器和护甲。\n- **关键物品**: 显示背包中最重要的三件物品。\n设计风格要求简洁、带有赛博朋克感，主色调为青色和品红色。",
         readWorldBook: true, // 默认读取世界书
         generateChoices: false, // 新增：默认禁用选项生成
+        showRegenerateButton: true, // 新增：默认显示重新生成按钮
         aiSource: "tavern", // 'tavern' 或 'custom'
         apiUrl: "",
         apiKey: "",
@@ -221,9 +223,40 @@ jQuery(async () => {
     function replacePlaceholder(uniqueId, replacementHtml) {
         const placeholderSpan = $(`#${uniqueId}`);
         if (placeholderSpan.length) {
-            // 直接用AI返回的完整HTML替换占位符的整个外部HTML
-            // 这能更好地确保浏览器正确处理包含 <script> 标签的注入内容
-            placeholderSpan.replaceWith(replacementHtml);
+            // 1. 创建一个容器，用于相对定位和包裹所有内容
+            const containerId = `rt-container-${uniqueId}`;
+            // 将AI生成的HTML包裹在一个带有新类和ID的div中
+            const containerHtml = `<div id="${containerId}" class="rt-status-bar-container">${replacementHtml}</div>`;
+    
+            // 2. 用带容器的HTML替换占位符
+            placeholderSpan.replaceWith(containerHtml);
+            const $container = $(`#${containerId}`);
+    
+            // 3. 如果设置开启，则添加重新生成按钮
+            if (settings.showRegenerateButton && $container.length) {
+                const regenerateButtonHtml = `<button class="rt-status-bar-regenerate-button" title="重新生成"><i class="fas fa-sync-alt"></i></button>`;
+                $container.append(regenerateButtonHtml);
+    
+                // 4. 为按钮绑定事件
+                $container.find('.rt-status-bar-regenerate-button').on('click', function() {
+                    if (isGenerating) {
+                        toastr.warning('正在生成中，请稍候...');
+                        return;
+                    }
+                    if (!lastMessageForRegeneration) {
+                        toastr.error('没有可用于重新生成的消息上下文。');
+                        return;
+                    }
+    
+                    // 移除旧的状态栏
+                    $container.remove();
+                    
+                    // 使用保存的上下文重新调用核心处理函数
+                    console.log(`[${extensionName}] 用户点击重新生成，使用消息 ID: ${lastMessageForRegeneration.message_id}`);
+                    handleNewMessage(lastMessageForRegeneration);
+                });
+            }
+    
             console.log(`[${extensionName}] 成功替换占位符 #${uniqueId}`);
         } else {
             console.warn(
@@ -366,6 +399,7 @@ jQuery(async () => {
             settings.readWorldBook
         );
         $("#rt-status-bar-generate-choices").prop("checked", settings.generateChoices); // 加载新设置
+        $("#rt-status-bar-show-regenerate-button").prop("checked", settings.showRegenerateButton);
         $("#rt-status-bar-ai-source").val(settings.aiSource);
         $("#rt-status-bar-api-url").val(settings.apiUrl);
         $("#rt-status-bar-api-key").val(settings.apiKey);
@@ -407,6 +441,7 @@ jQuery(async () => {
             ":checked"
         );
         settings.generateChoices = $("#rt-status-bar-generate-choices").is(":checked"); // 保存新设置
+        settings.showRegenerateButton = $("#rt-status-bar-show-regenerate-button").is(":checked");
         settings.aiSource = $("#rt-status-bar-ai-source").val();
         settings.apiUrl = $("#rt-status-bar-api-url").val();
         settings.apiKey = $("#rt-status-bar-api-key").val();
@@ -497,6 +532,9 @@ jQuery(async () => {
      * @param {object} messageToProcess - 由轮询机制确定的、需要处理的那条AI消息。
      */
     async function handleNewMessage(messageToProcess) {
+        // 保存消息以备重新生成
+        lastMessageForRegeneration = messageToProcess;
+
         // 检查插件是否启用
         if (!settings.enabled) {
             if (!window.rtStatusBarDisabledLogged) {
@@ -892,6 +930,7 @@ jQuery(async () => {
             saveSettings(false)
         );
         $("#rt-status-bar-generate-choices").on("change", () => saveSettings(false)); // 绑定新开关的事件
+        $("#rt-status-bar-show-regenerate-button").on("change", () => saveSettings(false));
         $("#rt-status-bar-ai-source").on("change", () => {
             toggleCustomApiSettings();
             saveSettings(false);
