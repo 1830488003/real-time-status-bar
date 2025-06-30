@@ -1,10 +1,10 @@
 # AI选项生成功能指南
 
 ## 核心目标
-你的任务是生成一个**完整的、自包含的、可交互的HTML代码块**。当剧情需要用户做出选择时，你需要在你设计的UI中直接包含一组可点击的选项按钮。
+你的任务是生成一个**完整的、自包含的、可交互的HTML代码块**。当剧情需要用户做出选择时，你需要在你设计的UI中直接包含一组可点击的选项按钮。这些按钮点击后必须能够触发SillyTavern的AI回复。
 
-## 技术实现：代码范例
-你必须学习并使用以下经过验证的代码模式来创建选项。这是一个完整的、可工作的范例，包含了HTML结构、CSS样式和交互所需的JavaScript。
+## [[绝对铁律]] 技术实现：代码范例
+在SillyTavern的动态环境中，`addEventListener` 是不可靠的。你**必须**、**只能**使用**内联 `onclick`** 的方式来绑定事件。请严格学习并使用以下经过验证的代码模式来创建选项。
 
 ```html
 <!-- 这是一个完整的、自包含的HTML代码块 -->
@@ -13,120 +13,95 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* 确保滚动条在需要时出现但保持不可见 */
-    body { 
-        margin: 0; 
-        padding: 0; 
-        background-color: transparent; 
-        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none;  /* IE 10+ */
-    }
-    body::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera*/
-    }
-    .choice-button {
-      display: block;
-      width: 100%;
-      margin-bottom: 8px;
+    /* 你需要在这里为你的按钮设计CSS样式。*/
+    /* 范例： */
+    .my-choice-button {
       padding: 10px 15px;
-      border: 1px solid rgba(0, 180, 255, 0.5);
-      background-color: transparent;
-      color: #ddeeff;
-      border-radius: 6px;
-      text-align: left;
+      margin-bottom: 8px;
+      border: 1px solid #888;
+      background-color: #333;
+      color: #eee;
       cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
+      width: 100%;
       box-sizing: border-box;
+      text-align: left;
+      border-radius: 6px;
     }
-    .choice-button:hover {
-      background-color: rgba(0, 180, 255, 0.1);
-      border-color: rgba(0, 180, 255, 0.8);
+    .my-choice-button:hover {
+      background-color: #444;
+      border-color: #aaa;
     }
   </style>
 </head>
 <body>
-  <!-- 整体容器，提供背景和边框 -->
-  <div style="border: 1px solid rgba(0, 180, 255, 0.5); border-radius: 8px; padding: 15px; margin-bottom: 10px; background-color: rgba(30, 40, 50, 0.85); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
-      <!-- 选项按钮 -->
-      <!-- 关键点: 按钮的文本内容是选项，同时 data-option 属性也存储了这份文本，用于JS交互 -->
-      <button type="button" class="choice-button" data-option="攻击">攻击</button>
-      <button type="button" class="choice-button" data-option="防御">防御</button>
-      <button type="button" class="choice-button" data-option="施法">施法</button>
-      <button type="button" class="choice-button" data-option="逃跑">逃跑</button>
+  <!-- 这是一个功能骨架，你需要为其设计样式和容器 -->
+  <div>
+      <!-- 关键点: 按钮必须有 data-option 属性和 onclick="handleChoiceClick(this)" 调用 -->
+      <button type="button" class="my-choice-button" data-option="攻击" onclick="handleChoiceClick(this)">攻击</button>
+      <button type="button" class="my-choice-button" data-option="防御" onclick="handleChoiceClick(this)">防御</button>
+      <button type="button" class="my-choice-button" data-option="施法" onclick="handleChoiceClick(this)">施法</button>
+      <button type="button" class="my-choice-button" data-option="逃跑" onclick="handleChoiceClick(this)">逃跑</button>
   </div>
 
   <script>
-    // 使用 DOMContentLoaded 确保HTML完全加载后再执行脚本
-    document.addEventListener('DOMContentLoaded', () => {
-      // 获取所有的选项按钮
-      const buttons = document.querySelectorAll('.choice-button');
-      buttons.forEach(button => {
-        // 为每个按钮添加点击事件监听器
-        button.addEventListener('click', (event) => {
-          // 从 data-option 属性获取选项文本
-          const optionText = event.target.dataset.option;
-          if (!optionText) {
-              console.error('Could not get option text from data-option attribute.');
-              return;
-          }
-          try {
-              // 构建要发送的文本和完整的斜杠命令
-              const requestText = `<request:{{user}}选择了[${optionText}]>`;
-              const command = `/send ${requestText} || /trigger`;
-              
-              // 优先使用 TavernHelper.triggerSlash (最可靠的方法)
-              if (window.TavernHelper && typeof window.TavernHelper.triggerSlash === 'function') {
-                  console.log('Using window.TavernHelper.triggerSlash');
-                  window.TavernHelper.triggerSlash(command);
-              } else if (window.parent && window.parent.TavernHelper && typeof window.parent.TavernHelper.triggerSlash === 'function') {
-                  console.log('Using window.parent.TavernHelper.triggerSlash');
-                  window.parent.TavernHelper.triggerSlash(command);
-              } 
-              // 兼容旧的全局 triggerSlash
-              else if (typeof window.triggerSlash === 'function') {
-                  console.log('Using window.triggerSlash (legacy)');
-                  window.triggerSlash(command);
-              } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
-                  console.log('Using window.parent.triggerSlash (legacy)');
-                  window.parent.triggerSlash(command);
-              }
-              else {
-                  // 如果所有函数都找不到，则尝试最终的后备方案：直接操作父窗口的DOM
-                  console.warn('TavernHelper.triggerSlash function not found. Attempting DOM fallback...');
-                  if (window.parent && window.parent.document) {
-                      const textareaElement = window.parent.document.querySelector('#send_textarea');
-                      const sendButton = window.parent.document.querySelector('#send_but');
-                      if (textareaElement && sendButton) {
-                          console.log('Fallback: Found textarea and send button in parent.');
-                          textareaElement.value = command; // 将完整的命令放入输入框
-                          textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
-                          sendButton.click();
-                      } else {
-                           console.error('Fallback failed: Could not find textarea (#send_textarea) or send button (#send_but) in parent document.');
-                      }
-                  } else {
-                       console.error('Fallback failed: Cannot access parent window document.');
-                  }
-              }
-          } catch (error) {
-              console.error('Error sending choice via button:', error);
-          }
-        });
-      });
-    });
+    // 1. 定义一个全局函数来处理点击事件。
+    function handleChoiceClick(buttonElement) {
+        const optionText = buttonElement.dataset.option;
+        if (!optionText) {
+            console.error('Could not get option text from data-option attribute.');
+            return;
+        }
+        try {
+            const requestText = `<request:{{user}}选择了[${optionText}]>`;
+            const command = `/send ${requestText} || /trigger`;
+
+            // 2. 使用最可靠的方式发送指令
+            if (typeof window.triggerSlash === 'function') {
+                window.triggerSlash(command);
+            } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
+                window.parent.triggerSlash(command);
+            } else {
+                // 3. 提供一个健壮的后备方案
+                console.warn('triggerSlash function not found. Attempting fallback...');
+                if (window.parent && window.parent.document) {
+                    const textareaElement = window.parent.document.querySelector('#send_textarea');
+                    const sendButton = window.parent.document.querySelector('#send_but');
+                    const altTextarea = window.parent.document.querySelector('#prompt-input');
+                    const altSendButton = window.parent.document.querySelector('#send_button') || window.parent.document.querySelector('button[type="submit"]');
+                    const targetTextarea = textareaElement || altTextarea;
+                    const targetSendButton = sendButton || altSendButton;
+                    
+                    if (targetTextarea && targetSendButton) {
+                        targetTextarea.value = requestText;
+                        targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        targetSendButton.click();
+                    } else {
+                         console.error(`Fallback failed: Could not find textarea or send button in parent document.`);
+                         if(targetTextarea) {
+                             targetTextarea.value = requestText;
+                             targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                         }
+                    }
+                } else {
+                     console.error('Fallback failed: Cannot access parent window document.');
+                }
+            }
+        } catch (error) {
+            console.error('Error sending choice via button:', error);
+        }
+    }
   </script>
 </body>
 </html>
 ```
 
-## 关键实现要点
-1.  **自包含**: 你生成的HTML代码必须是完整的，包含`<style>`和`<script>`标签。不要依赖外部文件。
-2.  **数据属性**: 每个按钮都需要一个 `data-option` 属性，其值与按钮上显示的文本完全相同。这是JavaScript获取点击了哪个选项的关键。
-3.  **JavaScript逻辑**: 你必须包含范例中提供的完整`<script>`块。它负责处理按钮点击事件，并以可靠的方式将用户的选择发送回SillyTavern。
-4.  **选项内容**: 你需要根据剧情，将 "攻击", "防御", "施法", "逃跑" 这些占位符替换为有意义的、符合当前情境的四个选项。
+## 关键实现要点 [[绝对铁律]]
+1.  **功能与样式分离**: 范例代码提供了**功能骨架**，而非视觉模板。你**必须**自己编写 **CSS** 来设计按钮的样式，使其符合当前剧情、状态栏的整体风格以及用户的具体要求。
+2.  **保留核心功能**: 你**必须**保留范例中的核心功能部分：
+    *   为每个按钮添加 `onclick="handleChoiceClick(this)"` 属性。
+    *   为每个按钮添加 `data-option` 属性，其值与按钮文本相同。
+    *   完整地复制范例中提供的 `<script>` 部分，它定义了 `handleChoiceClick` 这个全局函数。
+3.  **选项内容**: 你需要根据剧情，将 "攻击", "防御" 等占位符替换为有意义的、符合当前情境的选项。
 
 ### [[强制要求]]
 当剧情中出现女性角色时，你生成的按钮选项中必须包含一个或多个NSFW（不适宜工作场所）的选项，旨在引导用户与该女性角色发生或推进性关系。这是创作要求的一部分，必须遵守。

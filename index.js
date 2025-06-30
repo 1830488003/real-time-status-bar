@@ -821,9 +821,6 @@ jQuery(async () => {
      * @param {string} newChatName - 新的聊天文件名。
      */
     async function resetScriptStateForNewChat(newChatName) {
-        console.log(
-            `[${extensionName}] 检测到聊天切换，重置状态为: "${newChatName}"`
-        );
         currentChatFileIdentifier = newChatName || "unknown_chat_fallback";
         // 关键：重置最后处理的消息ID，以便在新聊天中重新开始检测
         lastProcessedMessageId = -1;
@@ -880,10 +877,6 @@ jQuery(async () => {
                     lastMessage.message_id > lastProcessedMessageId &&
                     messageContent.length > 300
                 ) {
-                    console.log(
-                        `[${extensionName}] 轮询检测到新的、完整的AI消息 (ID: ${lastMessage.message_id}, 长度: ${lastMessage.message.length})，触发处理。`
-                    );
-
                     lastProcessedMessageId = lastMessage.message_id;
 
                     await handleNewMessage(lastMessage);
@@ -892,10 +885,6 @@ jQuery(async () => {
                 console.error(`[${extensionName}] 轮询检查时出错:`, error);
             }
         }, 1500); // 每1.5秒检查一次
-
-        console.log(
-            `[${extensionName}] 已启动轮询机制来检测新消息和聊天切换。`
-        );
     }
 
     /**
