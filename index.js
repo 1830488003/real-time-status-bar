@@ -163,8 +163,9 @@ jQuery(async () => {
     const extensionName = "real-time-status-bar";
     const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
     let isGenerating = false;
-    let lastProcessedMessageId = -1; // 跟踪最后处理过的AI消息ID
-    let lastMessageForRegeneration = null; // 新增：存储用于重新生成的消息
+    // lastProcessedMessageId 和 lastProcessedMessageContent 已被移除，因为 isGenerating 标志足以防止无限循环，
+    // 且旧的状态跟踪逻辑导致了在删除状态栏后无法重新生成的问题。
+    let lastMessageForRegeneration = null; // 存储用于重新生成的消息
     let currentChatFileIdentifier = "unknown_chat_init"; // 跟踪当前聊天文件
 
     let SYSTEM_PROMPT = ""; // 将在init()中从外部文件加载
@@ -833,12 +834,13 @@ jQuery(async () => {
      */
     async function resetScriptStateForNewChat(newChatName) {
         currentChatFileIdentifier = newChatName || "unknown_chat_fallback";
-        // 关键：重置最后处理的消息ID，以便在新聊天中重新开始检测
-        lastProcessedMessageId = -1;
+        // 状态重置逻辑已简化，不再需要 lastProcessedMessageId。
     }
 
     /**
      * 使用轮询机制来检查新消息，并处理聊天切换。
+     * 此版本移除了 lastProcessedMessageId 状态跟踪，以修复删除状态栏后无法重新生成的问题。
+     * isGenerating 标志足以防止无限循环。
      */
     function startPolling() {
         setInterval(async () => {
@@ -856,21 +858,18 @@ jQuery(async () => {
                 // 2. 获取最后一条消息
                 const lastMessageArray = await TavernHelper.getChatMessages(-1);
                 if (!lastMessageArray || lastMessageArray.length === 0) {
-                    return;
+                    return; // 聊天为空，不执行任何操作
                 }
                 const lastMessage = lastMessageArray[0];
 
-                // 3. 检查最后一条消息是否合格
-                const isNew = lastMessage.message_id > lastProcessedMessageId;
+                // 3. 检查消息是否是合格的触发器
                 const isAi = lastMessage.role !== 'user';
                 const isNotSelf = !lastMessage.message.includes('class="rt-status-bar-container"');
-                const isComplete = (lastMessage.message || "").length > 300;
+                const isComplete = (lastMessage.message || "").length > 300; // 避免在 "..." 时触发
 
                 // 4. 如果所有条件都满足，则处理它
-                if (isNew && isAi && isNotSelf && isComplete) {
-                    // 立即更新ID，防止重复处理
-                    lastProcessedMessageId = lastMessage.message_id;
-                    // 调用核心函数
+                if (isAi && isNotSelf && isComplete) {
+                    // isGenerating 标志会阻止在处理期间再次触发，从而避免无限循环。
                     await handleNewMessage(lastMessage);
                 }
 
