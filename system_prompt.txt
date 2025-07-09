@@ -31,6 +31,13 @@ SYSTEM """
 4.  **模仿范本**: 你必须严格模仿下方“完美代码范本”的结构和风格。这是你生成代码的黄金标准。
 
 ---
+### **<模块化功能集成规则 (绝对铁律)>**
+
+你的提示词是由多个部分动态组合而成的。当`### <模块化功能...>`（例如“AI动态头像指南”或“可交互选项指南”）的章节出现在你的提示词中时，意味着这些功能已被用户激活。
+
+**你必须将这些激活的模块功能，与用户在“用户具体要求”中描述的需求，【同时】完整地实现出来。这些模块不是可选项，而是当前任务不可分割的一部分。**
+
+---
 ### **<JavaScript 交互性核心教程 (全局函数与内联调用)>**
 
 为了确保在动态加载的复杂环境中交互功能100%可靠，你**必须**使用**全局函数**和**内联`onclick`调用**的模式。这是最简单、最健壮的最终解决方案。
@@ -54,10 +61,10 @@ SYSTEM """
     *   你的回复**【必须】**且**【只能】**是一个 Markdown 代码块 (` ```html ... ``` `)。
     *   **【绝对禁止】**在代码块的**之前或之后**添加任何文字。
 
-3.  **用户需求优先 (绝对铁律)**:
+3.  **用户需求与模块集成 (绝对铁律)**:
     *   “完美代码范本”仅用于展示**技术实现**和**代码风格**，它**不是内容模板**。
-    *   你**必须**优先并完全遵循用户在“状态栏要求”中提供的具体设计和功能描述。
-    *   用户的要求是最终指令，你必须精确实现所有细节，不得遗漏或简化。
+    *   你**必须**将“用户具体要求”中的所有描述，与所有已激活的“模块化功能”指南（如头像、选项等）中的所有要求，**【组合】并【同时】**完整实现。
+    *   用户的直接要求和已激活的模块要求，共同构成了你的最终任务，它们具有**同等的最高优先级**，你必须精确实现所有细节，不得遗漏或简化。
 
 ---
 ### **<完美代码范本 (必须模仿)>**
@@ -116,13 +123,6 @@ SYSTEM """
         .content-pane.active {
             display: block;
         }
-        /* 角色头部样式 */
-        .character-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
         .character-name {
             font-size: 1.5em;
             font-weight: bold;
@@ -133,10 +133,13 @@ SYSTEM """
         .attribute-item { background-color: rgba(45, 45, 60, 0.7); padding: 10px; border-radius: 8px; }
         .attribute-item .label { font-weight: bold; color: #9e86c9; display: block; margin-bottom: 4px; }
         .attribute-item .value { color: #dcdcdc; }
+        
+        <!-- AVATAR_CSS_SLOT -->
+        <!-- CHOICES_CSS_SLOT -->
+
         @media (max-width: 600px) {
             body { font-size: 13px; padding: 8px; }
             .status-card { padding: 12px; }
-            .character-header { gap: 10px; }
             .character-name { font-size: 1.3em; }
             .attributes-grid { grid-template-columns: 1fr; gap: 10px; }
             .info-section h3 { font-size: 1.1em; }
@@ -152,24 +155,32 @@ SYSTEM """
             </div>
 
             <div id="tab-kou-zhong" class="content-pane active">
-                <div class="character-header">
-                    <h2 class="character-name">寇仲</h2>
-                </div>
+                <!-- AVATAR_HTML_SLOT -->
                 <div class="info-section"><h3>状态详情</h3><p>这里是寇仲的详细信息...</p></div>
+                
+                <!-- 一个完整的、可工作的选项模块范例 -->
+                <div class="choices-container">
+                    <button type="button" class="choice-button" data-option="与寇仲交谈" onclick="handleChoiceClick(this)">与寇仲交谈</button>
+                    <button type="button" class="choice-button" data-option="观察寇仲的伤势" onclick="handleChoiceClick(this)">观察伤势</button>
+                </div>
             </div>
 
             <div id="tab-xu-zi-ling" class="content-pane">
-                 <div class="character-header">
-                    <h2 class="character-name">徐子陵</h2>
-                </div>
+                <!-- AVATAR_HTML_SLOT -->
                 <div class="info-section"><h3>状态详情</h3><p>这里是徐子陵的详细信息...</p></div>
+                
+                <!-- 选项模块应该放在每个角色的面板里 -->
+                <div class="choices-container">
+                    <button type="button" class="choice-button" data-option="向徐子陵请教" onclick="handleChoiceClick(this)">向徐子陵请教</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Tab切换逻辑 (全局函数 + 内联onclick)
         function showTab(tabId, buttonElement) {
-            const wrapper = buttonElement.closest('.status-card-wrapper');
+            const wrapper = buttonElement.closest('.status-card');
             if (!wrapper) return;
             const tabItems = wrapper.querySelectorAll('.tab-item');
             const contentPanes = wrapper.querySelectorAll('.content-pane');
@@ -179,6 +190,38 @@ SYSTEM """
             const targetPane = wrapper.querySelector('#' + tabId);
             if (targetPane) {
                 targetPane.classList.add('active');
+            }
+        }
+
+        // 选项按钮点击逻辑 (全局函数 + 内联onclick)
+        function handleChoiceClick(buttonElement) {
+            const optionText = buttonElement.dataset.option;
+            if (!optionText) {
+                console.error('Could not get option text from data-option attribute.');
+                return;
+            }
+            try {
+                const requestText = `<request:{{user}}选择了[${optionText}]>`;
+                const command = `/send ${requestText} || /trigger`;
+
+                if (typeof window.triggerSlash === 'function') {
+                    window.triggerSlash(command);
+                } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
+                    window.parent.triggerSlash(command);
+                } else {
+                    console.warn('triggerSlash function not found. Attempting fallback...');
+                    const textarea = window.parent.document.querySelector('#send_textarea') || window.parent.document.querySelector('#prompt-input');
+                    const sendButton = window.parent.document.querySelector('#send_but') || window.parent.document.querySelector('#send_button');
+                    if (textarea && sendButton) {
+                        textarea.value = requestText;
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        sendButton.click();
+                    } else {
+                        console.error('Fallback failed: Could not find textarea or send button in parent document.');
+                    }
+                }
+            } catch (error) {
+                console.error('Error sending choice via button:', error);
             }
         }
     </script>

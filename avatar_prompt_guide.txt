@@ -1,13 +1,25 @@
 ### **<模块化功能：AI动态头像指南>**
 
-**核心指令：** 当本指南被激活时，你必须为状态栏中的每个角色生成一个头像。
+**核心指令：** 当本指南被激活时，你必须使用以下提供的代码片段和URL列表，为状态栏中的每个角色生成一个包含头像的头部。
 
 ---
 
-### **第一步：学习HTML结构**
+### **第一步：填充插槽**
 
-你**必须**使用以下HTML结构来展示头像和角色名称。将它插入到 `.content-pane` 元素的顶部。
+1.  将 `AVATAR_HTML_SNIPPET` 的内容，插入到主模板的 `<!-- AVATAR_HTML_SLOT -->` 位置。
+2.  将 `AVATAR_CSS_SNIPPET` 的内容，插入到主模板的 `<!-- AVATAR_CSS_SLOT -->` 位置。
 
+---
+
+### **第二步：选择并使用URL**
+
+1.  仔细阅读 `AVATAR_URL_LIST` 中每个URL旁边的描述。
+2.  根据当前角色的性别、气质和情景，从列表中选择一个**最贴切**的URL。
+3.  将选中的URL放入 `<img>` 标签的 `src` 属性中，并用角色名称替换 `alt` 属性的占位符。
+
+---
+
+### **<AVATAR_HTML_SNIPPET>**
 ```html
 <div class="character-header">
     <div class="character-avatar">
@@ -17,14 +29,8 @@
 </div>
 ```
 
----
-
-### **第二步：学习CSS样式**
-
-你**必须**将以下CSS代码添加到主 `<style>` 标签内，以确保头像和名称的样式正确。
-
+### **<AVATAR_CSS_SNIPPET>**
 ```css
-/* --- 头像模块专属样式 --- */
 .character-header {
     display: flex;
     align-items: center;
@@ -35,16 +41,15 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    overflow: hidden; /* 确保图片被裁剪为圆形 */
+    overflow: hidden;
 }
 .character-avatar img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 确保图片不变形地填满容器 */
+    object-fit: cover;
     border: 2px solid rgba(132, 102, 218, 0.7);
     border-radius: 50%;
 }
-/* 移动端适配 */
 @media (max-width: 600px) {
     .character-header {
         gap: 10px;
@@ -54,20 +59,10 @@
         height: 50px;
     }
 }
-/* --- 样式结束 --- */
 ```
 
 ---
-
-### **第三步：选择并使用URL**
-
-你将会收到一个“可用头像URL列表”。在构建角色信息时，你**必须**：
-1.  仔细阅读每个URL旁边的描述。
-2.  根据当前角色的性别、气质和情景，从列表中选择一个**最贴切**的URL。
-3.  将选中的URL放入 `<img>` 标签的 `src` 属性中。
-
----
-### **<可用头像URL列表>**
+### **<AVATAR_URL_LIST>**
 这些是武侠风格的url，需要的时候用
 男, 侧脸长发男子，眼神忧郁望向远方，身着素色衣袍。
 https://i.postimg.cc/dkQyH8Qf/1.jpg
@@ -305,37 +300,3 @@ coco：戴着墨镜的时尚美女，在户外回眸，自信大方，气场十�
 </final_file_content>
 
 重要：对于此文件的任何未来更改，请使用上面显示的final_file_content作为参考。此内容反映了文件的当前状态，包括任何自动格式化（例如，如果你使用了单引号但格式化器将其转换为双引号）。始终基于此最终版本进行SEARCH/REPLACE操作以确保准确性。
-
-<environment_details>
-# VSCode Visible Files
-real-time-status-bar/avatar_prompt_guide.txt
-
-# VSCode Open Tabs
-画图（不注入酒馆） (2).json
-real-time-status-bar/repaired_interactive_example.html
-real-time-status-bar/default_status_prompt.txt
-quest-system-extension/index.js
-quest-system-extension/任务md扩展项目文档.txt
-quest-system-extension/manifest.json
-preset-manager-momo/settings.html
-real-time-status-bar/style.css
-real-time-status-bar/选项生成指南.txt
-real-time-status-bar/manifest.json
-real-time-status-bar/头像url.txt
-real-time-status-bar/实时状态栏项目文档.txt
-real-time-status-bar/system_prompt.txt
-real-time-status-bar/avatar_prompt_guide.txt
-real-time-status-bar/settings.html
-real-time-status-bar/index.js
-preset-manager-momo/manifest.json
-real-time-status-bar/README.md
-
-# Current Time
-2025/6/30 下午6:53:13 (Asia/Shanghai, UTC+8:00)
-
-# Context Window Usage
-85,589 / 128K tokens used (67%)
-
-# Current Mode
-ACT MODE
-</environment_details>

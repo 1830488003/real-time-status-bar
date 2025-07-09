@@ -170,6 +170,7 @@ jQuery(async () => {
     let SYSTEM_PROMPT = ""; // 将在init()中从外部文件加载
     let DEFAULT_STATUS_PROMPT = ""; // 新增：用于存储默认的状态栏要求
     let AVATAR_PROMPT_GUIDE = ""; // 新增：用于存储头像提示词指南
+    let CHOICE_PROMPT_GUIDE = ""; // 新增：用于存储选项提示词指南
 
     const defaultSettings = {
         enabled: true, // 默认启用插件
@@ -241,6 +242,11 @@ jQuery(async () => {
      * @param {number} messageId - 包含此状态栏的消息ID，用于删除。
      */
     function replacePlaceholder(uniqueId, replacementHtml, messageId) {
+        // 新增：可折叠的日志输出AI返回的HTML
+        console.groupCollapsed(`[${extensionName}] AI返回的HTML内容 (点击展开): ${replacementHtml.substring(0, 200)}...`);
+        console.log(replacementHtml);
+        console.groupEnd();
+
         const placeholderSpan = $(`#${uniqueId}`);
         if (placeholderSpan.length) {
             const containerId = `rt-container-${uniqueId}`;
@@ -280,14 +286,14 @@ jQuery(async () => {
                         // 1. 立即在原位显示加载状态
                         $contentWrapper.html(`<span>⏳ <i>Beilu 正在重新构建状态界面...</i></span>`);
 
-                        // 2. 构建Prompt并调用AI
+                        // 2. 构建Prompt并调用AI（增加60秒超时）
                         const finalPrompt = await buildFinalPrompt(lastMessageForRegeneration);
                         let generationResult = "";
-                        if (settings.aiSource === 'custom') {
-                            generationResult = await callCustomApi(finalPrompt);
-                        } else {
-                            generationResult = await TavernHelper.generateRaw({ ordered_prompts: [{ role: 'user', content: finalPrompt }] });
-                        }
+                        const aiCallPromise = settings.aiSource === 'custom'
+                            ? callCustomApi(finalPrompt)
+                            : TavernHelper.generateRaw({ ordered_prompts: [{ role: 'user', content: finalPrompt }] });
+
+                        generationResult = await withTimeout(aiCallPromise, 60000); // 60秒超时
                         
                         // 3. 处理结果并替换加载状态
                         const generatedHtml = processAiResponse(generationResult);
@@ -316,6 +322,31 @@ jQuery(async () => {
                 `[${extensionName}] 未找到用于替换的占位符 #${uniqueId}`
             );
         }
+    }
+
+    /**
+     * 为一个Promise增加超时功能。
+     * @param {Promise} promise - 需要被包装的Promise。
+     * @param {number} ms - 超时时间（毫秒）。
+     * @returns {Promise} - 包装后的Promise，会在超时后reject。
+     */
+    function withTimeout(promise, ms) {
+        return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                reject(new Error(`操作超时（超过 ${ms / 1000} 秒）`));
+            }, ms);
+
+            promise.then(
+                (res) => {
+                    clearTimeout(timeoutId);
+                    resolve(res);
+                },
+                (err) => {
+                    clearTimeout(timeoutId);
+                    reject(err);
+                }
+            );
+        });
     }
 
     /**
@@ -518,115 +549,76 @@ jQuery(async () => {
 
     /**
      * 构建发送给AI的最终提示词。
+     * 采用简单直接的字符串拼接方式，确保所有模块按正确顺序组合。
      * @param {object} messageToProcess - 用于上下文的消息对象。
      * @returns {Promise<string>} 构建完成的提示词字符串。
      */
     async function buildFinalPrompt(messageToProcess) {
-        let contextParts = [];
-        let systemPromptContent = SYSTEM_PROMPT; // 顺序 1: 默认使用主系统提示
+        // 使用一个数组来收集所有提示词片段，最后用换行符连接，更清晰、高效。
+        const promptParts = [];
 
-        // 顺序 2: (可选) 添加AI动态头像指南
-        if (settings.useAvatar) {
-            if (AVATAR_PROMPT_GUIDE) {
-                systemPromptContent += `\n\n---\n\n${AVATAR_PROMPT_GUIDE}`;
-                console.log(`[${extensionName}] 已添加“AI动态头像指南”。`);
-            }
+        // 1. 核心系统指令 (始终存在)
+        promptParts.push(SYSTEM_PROMPT);
+
+        // 2. AI动态头像指南 (如果启用)
+        if (settings.useAvatar && AVATAR_PROMPT_GUIDE) {
+            promptParts.push(AVATAR_PROMPT_GUIDE);
         }
 
-        // 顺序 3: (可选) 添加选项生成指南
-        if (settings.generateChoices) {
-            try {
-                const choiceGuideContent = await $.get(`${extensionFolderPath}/选项生成指南.txt`);
-                systemPromptContent += `\n\n---\n\n${choiceGuideContent}`;
-                console.log(`[${extensionName}] 已加载并添加“选项生成指南”。`);
-            } catch (error) {
-                console.error(`[${extensionName}] 加载“选项生成指南.txt”失败:`, error);
-            }
+        // 3. 选项生成指南 (如果启用)
+        if (settings.generateChoices && CHOICE_PROMPT_GUIDE) {
+            promptParts.push(CHOICE_PROMPT_GUIDE);
         }
 
-        // 顺序 4: (可选) 添加世界书信息
+        // 4. 世界书内容 (如果启用)
         if (settings.readWorldBook) {
             try {
-                console.log(
-                    `[${extensionName}] 开始获取激活的世界书条目...`
-                );
                 const lorebookSettings = TavernHelper.getLorebookSettings();
-                const charLorebook =
-                    TavernHelper.getCurrentCharPrimaryLorebook();
+                const charLorebook = TavernHelper.getCurrentCharPrimaryLorebook();
                 const chatLorebook = await TavernHelper.getChatLorebook();
-
                 const activeLorebookNames = new Set(
                     [
-                        ...(lorebookSettings.selected_global_lorebooks ||
-                            []),
+                        ...(lorebookSettings.selected_global_lorebooks || []),
                         charLorebook,
                         chatLorebook,
                     ].filter(Boolean)
                 );
 
-                console.log(
-                    `[${extensionName}] 激活的世界书:`,
-                    Array.from(activeLorebookNames)
-                );
-
-                let allActiveEntries = [];
-                for (const bookName of activeLorebookNames) {
-                    const entries = await TavernHelper.getLorebookEntries(
-                        bookName
-                    );
-                    allActiveEntries.push(
-                        ...entries.filter((entry) => entry.enabled)
-                    );
-                }
-
-                if (allActiveEntries.length > 0) {
-                    const worldBookContent = allActiveEntries
-                        .map(
-                            (entry) =>
-                                `### ${
-                                    entry.comment || entry.keys.join(", ")
-                                }\n${entry.content}`
-                        )
-                        .join("\n\n");
-                    contextParts.push(
-                        `**相关世界观设定:**\n${worldBookContent}`
-                    );
-                    console.log(
-                        `[${extensionName}] 成功加载 ${allActiveEntries.length} 个世界书条目。`
-                    );
+                if (activeLorebookNames.size > 0) {
+                    let allActiveEntries = [];
+                    for (const bookName of activeLorebookNames) {
+                        const entries = await TavernHelper.getLorebookEntries(bookName);
+                        allActiveEntries.push(...entries.filter((entry) => entry.enabled));
+                    }
+                    if (allActiveEntries.length > 0) {
+                        const worldBookContent = allActiveEntries
+                            .map((entry) => `### ${entry.comment || entry.keys.join(", ")}\n${entry.content}`)
+                            .join("\n\n");
+                        promptParts.push(`**相关世界观设定:**\n${worldBookContent}`);
+                        console.log(`[${extensionName}] 成功加载 ${allActiveEntries.length} 个世界书条目。`);
+                    }
                 }
             } catch (err) {
-                console.error(
-                    `[${extensionName}] 获取世界书条目时出错:`,
-                    err
-                );
+                console.error(`[${extensionName}] 获取世界书条目时出错:`, err);
             }
         }
 
-        // 顺序 5: 添加触发消息作为上下文
+        // 5. 最新对话内容
         if (messageToProcess) {
-            contextParts.push(
-                `**最新对话内容:**\n${messageToProcess.name}: ${messageToProcess.message}`
-            );
-            console.log(
-                `[${extensionName}] 已成功将触发消息 (ID: ${messageToProcess.message_id}) 添加为上下文。`
-            );
-        } else {
-            console.warn(
-                `[${extensionName}] 未能获取到触发消息，无法添加对话上下文。`
-            );
+            promptParts.push(`**最新对话内容:**\n${messageToProcess.name}: ${messageToProcess.message}`);
         }
 
-        // 顺序 6: 添加用户自定义要求
-        contextParts.push(
-            `**用户具体要求:**\n${settings.statusBarRequirements}`
-        );
+        // 6. 用户具体要求
+        promptParts.push(`**用户具体要求:**\n${settings.statusBarRequirements}`);
 
-        // 组合最终的Prompt
-        const finalPrompt = `${systemPromptContent}\n\n---\n\n${contextParts.join(
-            "\n\n---\n\n"
-        )}`;
-        console.log(`[${extensionName}] 构建的最终Prompt:`, finalPrompt);
+        // 将所有部分用分隔符连接成最终的字符串
+        const finalPrompt = promptParts.join('\n\n---\n\n');
+        
+        // 新增：可折叠的日志输出
+        console.groupCollapsed(`[${extensionName}] 构建的最终Prompt (点击展开): ${finalPrompt.substring(0, 200)}...`);
+        console.log(finalPrompt);
+        console.groupEnd();
+
         return finalPrompt;
     }
 
@@ -731,16 +723,14 @@ jQuery(async () => {
             // 2. 构建Prompt
             const finalPrompt = await buildFinalPrompt(messageToProcess);
 
-            // 3. 调用AI
+            // 3. 调用AI（增加60秒超时）
             toastr.info("正在调用AI生成状态栏...");
             let generationResult = "";
-            if (settings.aiSource === "custom") {
-                generationResult = await callCustomApi(finalPrompt);
-            } else {
-                generationResult = await TavernHelper.generateRaw({
-                    ordered_prompts: [{ role: "user", content: finalPrompt }],
-                });
-            }
+            const aiCallPromise = settings.aiSource === 'custom'
+                ? callCustomApi(finalPrompt)
+                : TavernHelper.generateRaw({ ordered_prompts: [{ role: 'user', content: finalPrompt }] });
+
+            generationResult = await withTimeout(aiCallPromise, 60000); // 60秒超时
 
             // 4. 处理并替换内容
             const generatedHtml = processAiResponse(generationResult);
@@ -852,56 +842,38 @@ jQuery(async () => {
      */
     function startPolling() {
         setInterval(async () => {
-            // 如果正在生成或插件被禁用，则跳过本次检查
             if (isGenerating || !settings.enabled) {
                 return;
             }
 
             try {
-                // 步骤 1: 检查聊天是否已切换
+                // 1. 检查并处理聊天切换
                 const latestChatName = await getLatestChatName();
-                if (
-                    latestChatName &&
-                    latestChatName !== currentChatFileIdentifier
-                ) {
+                if (latestChatName && latestChatName !== currentChatFileIdentifier) {
                     await resetScriptStateForNewChat(latestChatName);
-                    // 状态已重置，可以继续本次轮询的后续检查
                 }
 
-                // 步骤 2: 检查新消息
-                const messages = await TavernHelper.getChatMessages(-1);
-                if (!messages || messages.length === 0) {
+                // 2. 获取最后一条消息
+                const lastMessageArray = await TavernHelper.getChatMessages(-1);
+                if (!lastMessageArray || lastMessageArray.length === 0) {
                     return;
                 }
+                const lastMessage = lastMessageArray[0];
 
-                const lastMessage = messages[0];
-                if (
-                    !lastMessage ||
-                    typeof lastMessage.message_id === "undefined"
-                ) {
-                    return;
-                }
+                // 3. 检查最后一条消息是否合格
+                const isNew = lastMessage.message_id > lastProcessedMessageId;
+                const isAi = lastMessage.role !== 'user';
+                const isNotSelf = !lastMessage.message.includes('class="rt-status-bar-container"');
+                const isComplete = (lastMessage.message || "").length > 300;
 
-                const messageContent = lastMessage.message || "";
-
-                // 新增：检查并跳过由本插件自己生成的状态栏，防止无限循环
-                if (messageContent.includes('class="rt-status-bar-container"')) {
-                    return;
-                }
-
-                // 检查条件：
-                // 1. 是AI消息 (role !== 'user')
-                // 2. 消息ID是新的 (lastMessage.message_id > lastProcessedMessageId)
-                // 3. 消息内容足够长 (messageContent.length > 300)
-                if (
-                    lastMessage.role !== "user" &&
-                    lastMessage.message_id > lastProcessedMessageId &&
-                    messageContent.length > 300
-                ) {
+                // 4. 如果所有条件都满足，则处理它
+                if (isNew && isAi && isNotSelf && isComplete) {
+                    // 立即更新ID，防止重复处理
                     lastProcessedMessageId = lastMessage.message_id;
-
+                    // 调用核心函数
                     await handleNewMessage(lastMessage);
                 }
+
             } catch (error) {
                 console.error(`[${extensionName}] 轮询检查时出错:`, error);
             }
@@ -921,17 +893,19 @@ jQuery(async () => {
 
         // 2. 并行异步加载所有必要的文本文件
         try {
-            const [systemPromptData, defaultStatusPromptData, avatarPromptGuideData] =
+            const [systemPromptData, defaultStatusPromptData, avatarPromptGuideData, choicePromptGuideData] =
                 await Promise.all([
                     $.get(`${extensionFolderPath}/system_prompt.txt`),
                     $.get(`${extensionFolderPath}/default_status_prompt.txt`),
                     $.get(`${extensionFolderPath}/avatar_prompt_guide.txt`),
+                    $.get(`${extensionFolderPath}/选项生成指南.txt`),
                 ]);
             SYSTEM_PROMPT = systemPromptData;
             DEFAULT_STATUS_PROMPT = defaultStatusPromptData;
             AVATAR_PROMPT_GUIDE = avatarPromptGuideData;
+            CHOICE_PROMPT_GUIDE = choicePromptGuideData;
             console.log(
-                `[${extensionName}] 系统提示词、默认状态要求和头像指南已成功加载。`
+                `[${extensionName}] 所有提示词模块已成功加载。`
             );
         } catch (error) {
             console.error(

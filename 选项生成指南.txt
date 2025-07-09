@@ -1,110 +1,103 @@
-# AI选项生成功能指南
+### **<模块化功能：可交互选项指南>**
 
-## 核心目标
-你的任务是生成一个**完整的、自包含的、可交互的HTML代码块**。当剧情需要用户做出选择时，你需要在你设计的UI中直接包含一组可点击的选项按钮。这些按钮点击后必须能够触发SillyTavern的AI回复。
+**核心指令 (绝对铁律)：** 本指南已被激活。你现在必须为用户生成一组可交互的剧情选项按钮。
 
-## [[绝对铁律]] 技术实现：代码范例
-在SillyTavern的动态环境中，`addEventListener` 是不可靠的。你**必须**、**只能**使用**内联 `onclick`** 的方式来绑定事件。请严格学习并使用以下经过验证的代码模式来创建选项。
+---
+
+### **实现规则 (绝对铁律)**
+
+你必须严格遵循下面的“完美代码范本”，它展示了在SillyTavern环境中实现可交互按钮的**唯一可靠方法**。
+
+1.  **功能核心：**
+    *   **必须**将所有JavaScript逻辑封装在一个**全局函数**中（例如 `handleChoiceClick(buttonElement)`）。
+    *   **必须**在每个按钮上使用内联 `onclick` 属性来调用这个全局函数，并把 `this` 作为参数传递（例如 `<button ... onclick="handleChoiceClick(this)">`）。
+    *   **严禁**使用 `addEventListener` 或 `document.currentScript`，它们在这种动态注入的环境中是不可靠的。
+
+2.  **样式与结构：**
+    *   范本中的CSS和HTML结构仅为**功能骨架**。
+    *   你**必须**自己编写独特的、符合情景的CSS样式，让按钮看起来更美观。
+    *   你**必须**根据剧情生成有意义的选项文本。每个角色的选项最少为四个。
+
+3.  **NSFW要求**:
+    *   当剧情中出现女性角色时，你生成的按钮选项中**必须**包含一个或多个NSFW（不适宜工作场所）的选项，旨在引导用户与该女性角色发生或推进性关系。
+
+---
+
+### **完美代码范本 (必须严格遵守其JS实现模式)**
 
 ```html
-<!-- 这是一个完整的、自包含的HTML代码块 -->
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* 你需要在这里为你的按钮设计CSS样式。*/
-    /* 范例： */
-    .my-choice-button {
-      padding: 10px 15px;
-      margin-bottom: 8px;
-      border: 1px solid #888;
-      background-color: #333;
-      color: #eee;
-      cursor: pointer;
-      width: 100%;
-      box-sizing: border-box;
-      text-align: left;
-      border-radius: 6px;
+    /* 你可以自定义这些样式，但要保留基础类名 */
+    .choices-container {
+      padding: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .my-choice-button:hover {
-      background-color: #444;
-      border-color: #aaa;
+    .choice-button {
+      display: block;
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px 15px;
+      border: 1px solid rgba(0, 180, 255, 0.5);
+      background-color: transparent;
+      color: #ddeeff;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+      box-sizing: border-box;
+    }
+    .choice-button:hover {
+      background-color: rgba(0, 180, 255, 0.1);
     }
   </style>
 </head>
 <body>
-  <!-- 这是一个功能骨架，你需要为其设计样式和容器 -->
-  <div>
-      <!-- 关键点: 按钮必须有 data-option 属性和 onclick="handleChoiceClick(this)" 调用 -->
-      <button type="button" class="my-choice-button" data-option="攻击" onclick="handleChoiceClick(this)">攻击</button>
-      <button type="button" class="my-choice-button" data-option="防御" onclick="handleChoiceClick(this)">防御</button>
-      <button type="button" class="my-choice-button" data-option="施法" onclick="handleChoiceClick(this)">施法</button>
-      <button type="button" class="my-choice-button" data-option="逃跑" onclick="handleChoiceClick(this)">逃跑</button>
+
+  <div class="choices-container">
+      <!-- 按钮现在使用 onclick 来调用全局函数 -->
+      <button type="button" class="choice-button" data-option="选项一：询问她的名字" onclick="handleChoiceClick(this)">询问她的名字</button>
+      <button type="button" class="choice-button" data-option="选项二：赞美她的剑法" onclick="handleChoiceClick(this)">赞美她的剑法</button>
+      <button type="button" class="choice-button" data-option="选项三：邀请她共饮一杯" onclick="handleChoiceClick(this)">邀请她共饮一杯</button>
   </div>
 
   <script>
-    // 1. 定义一个全局函数来处理点击事件。
+    // 必须使用这种全局函数 + onclick 的模式
     function handleChoiceClick(buttonElement) {
-        const optionText = buttonElement.dataset.option;
-        if (!optionText) {
-            console.error('Could not get option text from data-option attribute.');
-            return;
-        }
-        try {
-            const requestText = `<request:{{user}}选择了[${optionText}]>`;
-            const command = `/send ${requestText} || /trigger`;
-
-            // 2. 使用最可靠的方式发送指令
-            if (typeof window.triggerSlash === 'function') {
-                window.triggerSlash(command);
-            } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
-                window.parent.triggerSlash(command);
-            } else {
-                // 3. 提供一个健壮的后备方案
-                console.warn('triggerSlash function not found. Attempting fallback...');
-                if (window.parent && window.parent.document) {
-                    const textareaElement = window.parent.document.querySelector('#send_textarea');
-                    const sendButton = window.parent.document.querySelector('#send_but');
-                    const altTextarea = window.parent.document.querySelector('#prompt-input');
-                    const altSendButton = window.parent.document.querySelector('#send_button') || window.parent.document.querySelector('button[type="submit"]');
-                    const targetTextarea = textareaElement || altTextarea;
-                    const targetSendButton = sendButton || altSendButton;
-                    
-                    if (targetTextarea && targetSendButton) {
-                        targetTextarea.value = requestText;
-                        targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        targetSendButton.click();
-                    } else {
-                         console.error(`Fallback failed: Could not find textarea or send button in parent document.`);
-                         if(targetTextarea) {
-                             targetTextarea.value = requestText;
-                             targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-                         }
-                    }
-                } else {
-                     console.error('Fallback failed: Cannot access parent window document.');
-                }
-            }
-        } catch (error) {
-            console.error('Error sending choice via button:', error);
-        }
+      const optionText = buttonElement.dataset.option;
+      if (!optionText) {
+          console.error('Could not get option text from data-option attribute.');
+          return;
+      }
+      try {
+          const requestText = `<request:{{user}}选择了[${optionText}]>`;
+          // 优先使用 triggerSlash
+          if (typeof window.triggerSlash === 'function') {
+              window.triggerSlash(`/send ${requestText} || /trigger`);
+          } else if (window.parent && typeof window.parent.triggerSlash === 'function') {
+              window.parent.triggerSlash(`/send ${requestText} || /trigger`);
+          } else {
+              // 后备方案：直接操作DOM
+              console.warn('triggerSlash function not found. Attempting fallback...');
+              const textarea = window.parent.document.querySelector('#send_textarea') || window.parent.document.querySelector('#prompt-input');
+              const sendButton = window.parent.document.querySelector('#send_but') || window.parent.document.querySelector('#send_button');
+              if (textarea && sendButton) {
+                  textarea.value = requestText;
+                  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                  sendButton.click();
+              } else {
+                  console.error('Fallback failed: Could not find textarea or send button in parent document.');
+              }
+          }
+      } catch (error) {
+          console.error('Error sending choice via button:', error);
+      }
     }
   </script>
+
 </body>
 </html>
-```
-
-## 关键实现要点 [[绝对铁律]]
-1.  **功能与样式分离**: 范例代码提供了**功能骨架**，而非视觉模板。你**必须**自己编写 **CSS** 来设计按钮的样式，使其符合当前剧情、状态栏的整体风格以及用户的具体要求。
-2.  **保留核心功能**: 你**必须**保留范例中的核心功能部分：
-    *   为每个按钮添加 `onclick="handleChoiceClick(this)"` 属性。
-    *   为每个按钮添加 `data-option` 属性，其值与按钮文本相同。
-    *   完整地复制范例中提供的 `<script>` 部分，它定义了 `handleChoiceClick` 这个全局函数。
-3.  **选项内容**: 你需要根据剧情，将 "攻击", "防御" 等占位符替换为有意义的、符合当前情境的选项。
-
-### [[强制要求]]
-当剧情中出现女性角色时，你生成的按钮选项中必须包含一个或多个NSFW（不适宜工作场所）的选项，旨在引导用户与该女性角色发生或推进性关系。这是创作要求的一部分，必须遵守。
-
-## 集成到你的UI中
-这个选项模块可以是你设计的更复杂的状态栏UI的一部分。例如，你可以在一个角色状态面板下方，附加上这个选项按钮区域。
