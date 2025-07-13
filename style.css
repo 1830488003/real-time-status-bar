@@ -1,31 +1,35 @@
 /* 扩展设置页面的主容器 */
-.extension_settings[data-extension-name="real-time-status-bar"] .inline-drawer-content {
+.extension_settings[data-extension-name='real-time-status-bar']
+    .inline-drawer-content {
     display: flex;
     flex-direction: column;
     gap: 10px; /* 统一设置项目之间的间距 */
 }
 
 /* 设置项的通用样式 */
-.extension_settings[data-extension-name="real-time-status-bar"] .setting_item {
+.extension_settings[data-extension-name='real-time-status-bar'] .setting_item {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
 /* 对于需要水平排列的设置项（如开关） */
-.extension_settings[data-extension-name="real-time-status-bar"] .flex-container {
+.extension_settings[data-extension-name='real-time-status-bar']
+    .flex-container {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
 /* 标签样式 */
-.extension_settings[data-extension-name="real-time-status-bar"] .setting_item label {
+.extension_settings[data-extension-name='real-time-status-bar']
+    .setting_item
+    label {
     font-weight: bold;
 }
 
 /* 文本输入框和选择框样式 */
-.extension_settings[data-extension-name="real-time-status-bar"] .text_pole {
+.extension_settings[data-extension-name='real-time-status-bar'] .text_pole {
     width: 100%;
 }
 
@@ -59,13 +63,18 @@
 }
 
 /* 模型加载按钮的flex容器 */
-.extension_settings[data-extension-name="real-time-status-bar"] .setting_item .flex-container {
+.extension_settings[data-extension-name='real-time-status-bar']
+    .setting_item
+    .flex-container {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.extension_settings[data-extension-name="real-time-status-bar"] .setting_item .flex-container .text_pole {
+.extension_settings[data-extension-name='real-time-status-bar']
+    .setting_item
+    .flex-container
+    .text_pole {
     flex-grow: 1;
 }
 

@@ -1,166 +1,189 @@
 <div class="extension_settings" data-extension-name="real-time-status-bar">
-  <div class="inline-drawer">
-    <div class="inline-drawer-toggle inline-drawer-header">
-      <b>
-        <i class="fa-solid fa-file-invoice"></i>
-        实时状态栏
-      </b>
-      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>
+                <i class="fa-solid fa-file-invoice"></i>
+                实时状态栏
+            </b>
+            <div
+                class="inline-drawer-icon fa-solid fa-circle-chevron-down down"
+            ></div>
+        </div>
+
+        <div class="inline-drawer-content">
+            <!-- 版本与更新信息 -->
+            <div class="rt-status-bar-version-panel">
+                <p>作者: 默默 & Cline</p>
+                <p>
+                    当前版本:
+                    <span id="rt-status-bar-current-version">0.0.0</span>
+                    <span class="update-indicator" style="display: none"
+                        >(发现新版!)</span
+                    >
+                </p>
+                <button
+                    id="rt-status-bar-check-for-updates"
+                    class="menu_button"
+                >
+                    <i class="fa-solid fa-cloud-arrow-down"></i> 检查更新
+                </button>
+            </div>
+            <div
+                class="description_text"
+                style="text-align: center; margin-top: 5px"
+            >
+                有任何问题联系方式 默默的角色卡QQ群1: 118774271
+                默默的角色卡QQ群2: 705941358
+            </div>
+            <hr />
+
+            <!-- 启用/禁用插件 -->
+            <div class="setting_item flex-container">
+                <label for="rt-status-bar-enabled">启用插件</label>
+                <div class="SillyTavernSwitch">
+                    <input id="rt-status-bar-enabled" type="checkbox" />
+                    <div class="SillyTavernSlider"></div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- 状态栏要求 -->
+            <div class="setting_item">
+                <label for="rt-status-bar-requirements">
+                    状态栏要求
+                    <i
+                        class="fa-solid fa-circle-info"
+                        title="描述你希望状态栏包含哪些内容、采用何种风格。这些要求将与固定的系统提示词、世界书（如果启用）和最新消息一起发送给AI。"
+                    ></i>
+                </label>
+                <textarea
+                    id="rt-status-bar-requirements"
+                    class="text_pole"
+                    rows="6"
+                    placeholder="示例：&#10;请为角色创建一个状态栏，包含以下部分：&#10;- **核心状态**: 显示生命值（HP）和法力值（MP）。&#10;- **情绪**: 用一个词描述当前情绪。&#10;- **装备**: 列出当前装备的武器和护甲。&#10;- **关键物品**: 显示背包中最重要的三件物品。&#10;设计风格要求简洁、带有赛博朋克感，主色调为青色和品红色。"
+                ></textarea>
+            </div>
+
+            <!-- 读取世界书开关 -->
+            <div class="setting_item flex-container">
+                <label for="rt-status-bar-read-worldbook">
+                    读取世界书
+                    <i
+                        class="fa-solid fa-circle-info"
+                        title="启用后，会将当前激活的世界书条目内容注入到上下文中，帮助AI更好地理解背景设定。"
+                    ></i>
+                </label>
+                <div class="SillyTavernSwitch">
+                    <input id="rt-status-bar-read-worldbook" type="checkbox" />
+                    <div class="SillyTavernSlider"></div>
+                </div>
+            </div>
+
+            <!-- 生成选项功能开关 -->
+            <div class="setting_item flex-container">
+                <label for="rt-status-bar-generate-choices">
+                    生成选项功能
+                    <i
+                        class="fa-solid fa-circle-info"
+                        title="启用后，AI将在其生成的UI中包含可交互的选项按钮。"
+                    ></i>
+                </label>
+                <div class="SillyTavernSwitch">
+                    <input
+                        id="rt-status-bar-generate-choices"
+                        type="checkbox"
+                    />
+                    <div class="SillyTavernSlider"></div>
+                </div>
+            </div>
+
+            <!-- AI动态头像开关 -->
+            <div class="setting_item flex-container">
+                <label for="rt-status-bar-use-avatar">
+                    AI动态头像
+                    <i
+                        class="fa-solid fa-circle-info"
+                        title="启用后，将允许AI根据情景选择并显示角色头像。"
+                    ></i>
+                </label>
+                <div class="SillyTavernSwitch">
+                    <input id="rt-status-bar-use-avatar" type="checkbox" />
+                    <div class="SillyTavernSlider"></div>
+                </div>
+            </div>
+
+            <!-- 重新生成按钮开关 -->
+            <div class="setting_item flex-container">
+                <label for="rt-status-bar-show-regenerate-button">
+                    显示重新生成按钮
+                    <i
+                        class="fa-solid fa-circle-info"
+                        title="启用后，将在生成的状态栏右上角显示一个重新生成的按钮。"
+                    ></i>
+                </label>
+                <div class="SillyTavernSwitch">
+                    <input
+                        id="rt-status-bar-show-regenerate-button"
+                        type="checkbox"
+                    />
+                    <div class="SillyTavernSlider"></div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- AI 源选择 -->
+            <div class="setting_item">
+                <label for="rt-status-bar-ai-source">AI 源</label>
+                <select id="rt-status-bar-ai-source" class="text_pole">
+                    <option value="tavern">酒馆 AI (Tavern AI)</option>
+                    <option value="custom">自定义 AI (Custom AI)</option>
+                </select>
+            </div>
+
+            <!-- 自定义AI配置区域，默认隐藏 -->
+            <div id="rt-status-bar-custom-api-settings" class="hidden">
+                <div class="setting_item">
+                    <label for="rt-status-bar-api-url">API 基础URL</label>
+                    <input
+                        id="rt-status-bar-api-url"
+                        type="text"
+                        class="text_pole"
+                        placeholder="例如: http://127.0.0.1:5001/v1"
+                    />
+                </div>
+                <div class="setting_item">
+                    <label for="rt-status-bar-api-key">API 密钥 (可选)</label>
+                    <input
+                        id="rt-status-bar-api-key"
+                        type="password"
+                        class="text_pole"
+                        placeholder="如果需要的话，请输入API Key"
+                    />
+                </div>
+                <div class="setting_item">
+                    <label for="rt-status-bar-api-model">模型名称</label>
+                    <div class="flex-container">
+                        <select
+                            id="rt-status-bar-api-model"
+                            class="text_pole"
+                        ></select>
+                        <button
+                            id="rt-status-bar-fetch-models"
+                            class="menu_button fa-solid fa-arrows-rotate"
+                            title="加载模型列表"
+                        ></button>
+                    </div>
+                </div>
+                <div class="setting_item">
+                    <button id="rt-status-bar-save-api" class="menu_button">
+                        保存自定义API
+                    </button>
+                </div>
+            </div>
+
+            <hr />
+        </div>
     </div>
-
-    <div class="inline-drawer-content">
-      <!-- 版本与更新信息 -->
-      <div class="rt-status-bar-version-panel">
-        <p>作者: 默默 & Cline</p>
-        <p>
-          当前版本: <span id="rt-status-bar-current-version">0.0.0</span>
-          <span class="update-indicator" style="display: none">(发现新版!)</span>
-        </p>
-        <button id="rt-status-bar-check-for-updates" class="menu_button">
-          <i class="fa-solid fa-cloud-arrow-down"></i> 检查更新
-        </button>
-      </div>
-      <div class="description_text" style="text-align: center; margin-top: 5px">
-        有任何问题联系方式 默默的角色卡QQ群1: 118774271 默默的角色卡QQ群2: 705941358
-      </div>
-      <hr />
-
-      <!-- 启用/禁用插件 -->
-      <div class="setting_item flex-container">
-        <label for="rt-status-bar-enabled">启用插件</label>
-        <div class="SillyTavernSwitch">
-          <input id="rt-status-bar-enabled" type="checkbox" />
-          <div class="SillyTavernSlider"></div>
-        </div>
-      </div>
-
-      <hr />
-
-      <!-- 状态栏要求 -->
-      <div class="setting_item">
-        <label for="rt-status-bar-requirements">
-          状态栏要求
-          <i
-            class="fa-solid fa-circle-info"
-            title="描述你希望状态栏包含哪些内容、采用何种风格。这些要求将与固定的系统提示词、世界书（如果启用）和最新消息一起发送给AI。"
-          ></i>
-        </label>
-        <textarea
-          id="rt-status-bar-requirements"
-          class="text_pole"
-          rows="6"
-          placeholder="示例：&#10;请为角色创建一个状态栏，包含以下部分：&#10;- **核心状态**: 显示生命值（HP）和法力值（MP）。&#10;- **情绪**: 用一个词描述当前情绪。&#10;- **装备**: 列出当前装备的武器和护甲。&#10;- **关键物品**: 显示背包中最重要的三件物品。&#10;设计风格要求简洁、带有赛博朋克感，主色调为青色和品红色。"
-        ></textarea>
-      </div>
-
-      <!-- 读取世界书开关 -->
-      <div class="setting_item flex-container">
-        <label for="rt-status-bar-read-worldbook">
-          读取世界书
-          <i
-            class="fa-solid fa-circle-info"
-            title="启用后，会将当前激活的世界书条目内容注入到上下文中，帮助AI更好地理解背景设定。"
-          ></i>
-        </label>
-        <div class="SillyTavernSwitch">
-          <input id="rt-status-bar-read-worldbook" type="checkbox" />
-          <div class="SillyTavernSlider"></div>
-        </div>
-      </div>
-
-      <!-- 生成选项功能开关 -->
-      <div class="setting_item flex-container">
-        <label for="rt-status-bar-generate-choices">
-          生成选项功能
-          <i
-            class="fa-solid fa-circle-info"
-            title="启用后，AI将在其生成的UI中包含可交互的选项按钮。"
-          ></i>
-        </label>
-        <div class="SillyTavernSwitch">
-          <input id="rt-status-bar-generate-choices" type="checkbox" />
-          <div class="SillyTavernSlider"></div>
-        </div>
-      </div>
-
-      <!-- AI动态头像开关 -->
-      <div class="setting_item flex-container">
-        <label for="rt-status-bar-use-avatar">
-          AI动态头像
-          <i
-            class="fa-solid fa-circle-info"
-            title="启用后，将允许AI根据情景选择并显示角色头像。"
-          ></i>
-        </label>
-        <div class="SillyTavernSwitch">
-          <input id="rt-status-bar-use-avatar" type="checkbox" />
-          <div class="SillyTavernSlider"></div>
-        </div>
-      </div>
-
-      <!-- 重新生成按钮开关 -->
-      <div class="setting_item flex-container">
-        <label for="rt-status-bar-show-regenerate-button">
-          显示重新生成按钮
-          <i
-            class="fa-solid fa-circle-info"
-            title="启用后，将在生成的状态栏右上角显示一个重新生成的按钮。"
-          ></i>
-        </label>
-        <div class="SillyTavernSwitch">
-          <input id="rt-status-bar-show-regenerate-button" type="checkbox" />
-          <div class="SillyTavernSlider"></div>
-        </div>
-      </div>
-
-      <hr />
-
-      <!-- AI 源选择 -->
-      <div class="setting_item">
-        <label for="rt-status-bar-ai-source">AI 源</label>
-        <select id="rt-status-bar-ai-source" class="text_pole">
-          <option value="tavern">酒馆 AI (Tavern AI)</option>
-          <option value="custom">自定义 AI (Custom AI)</option>
-        </select>
-      </div>
-
-      <!-- 自定义AI配置区域，默认隐藏 -->
-      <div id="rt-status-bar-custom-api-settings" class="hidden">
-        <div class="setting_item">
-          <label for="rt-status-bar-api-url">API 基础URL</label>
-          <input
-            id="rt-status-bar-api-url"
-            type="text"
-            class="text_pole"
-            placeholder="例如: http://127.0.0.1:5001/v1"
-          />
-        </div>
-        <div class="setting_item">
-          <label for="rt-status-bar-api-key">API 密钥 (可选)</label>
-          <input
-            id="rt-status-bar-api-key"
-            type="password"
-            class="text_pole"
-            placeholder="如果需要的话，请输入API Key"
-          />
-        </div>
-        <div class="setting_item">
-          <label for="rt-status-bar-api-model">模型名称</label>
-          <div class="flex-container">
-            <select id="rt-status-bar-api-model" class="text_pole"></select>
-            <button
-              id="rt-status-bar-fetch-models"
-              class="menu_button fa-solid fa-arrows-rotate"
-              title="加载模型列表"
-            ></button>
-          </div>
-        </div>
-        <div class="setting_item">
-          <button id="rt-status-bar-save-api" class="menu_button">保存自定义API</button>
-        </div>
-      </div>
-
-      <hr />
-    </div>
-  </div>
 </div>

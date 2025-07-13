@@ -1,392 +1,495 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            background-color: transparent;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 10px;
-            font-size: 14px;
-        }
-        .status-card {
-            background-color: rgba(30, 30, 45, 0.85);
-            border-radius: 12px;
-            border: 1px solid rgba(132, 102, 218, 0.5);
-            padding: 16px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            margin-bottom: 12px;
-        }
-        .nav-tabs {
-            display: flex;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(132, 102, 218, 0.3);
-            padding-bottom: 8px;
-            overflow-x: auto;
-            gap: 8px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(132, 102, 218, 0.3) transparent;
-        }
-        .nav-tabs::-webkit-scrollbar {
-            height: 5px;
-        }
-        .nav-tabs::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .nav-tabs::-webkit-scrollbar-thumb {
-            background-color: rgba(132, 102, 218, 0.3);
-            border-radius: 10px;
-        }
-        .tab-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-radius: 6px;
-            white-space: nowrap;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            font-weight: bold;
-            color: #9e86c9;
-        }
-        .tab-item.active {
-            background-color: rgba(132, 102, 218, 0.4);
-            color: #ffffff;
-        }
-        .content-pane {
-            display: none;
-        }
-        .content-pane.active {
-            display: block;
-        }
-        .info-section h3 {
-            margin: 0 0 12px 0;
-            color: #c5a8ff;
-            font-size: 1.2em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed rgba(132, 102, 218, 0.3);
-            padding-bottom: 6px;
-        }
-        .attributes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-        .attribute-item {
-            background-color: rgba(45, 45, 60, 0.7);
-            padding: 10px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .attribute-item .label {
-            font-weight: bold;
-            color: #9e86c9;
-            display: block;
-            margin-bottom: 4px;
-            font-size: 0.9em;
-        }
-        .attribute-item .value {
-            color: #dcdcdc;
-            font-size: 1em;
-            word-break: break-word;
-        }
-        .hint-box {
-            background-color: rgba(50, 40, 60, 0.8);
-            border: 1px dashed rgba(132, 102, 218, 0.6);
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 15px;
-            color: #b0a0d0;
-            font-style: italic;
-            position: relative;
-            padding-left: 30px;
-        }
-        .hint-box::before {
-            content: '●';
-            position: absolute;
-            left: 12px;
-            color: #9e86c9;
-            font-size: 1.2em;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        .progress-bar-container {
-            width: 100%;
-            background-color: rgba(45, 45, 60, 0.7);
-            border-radius: 8px;
-            overflow: hidden;
-            height: 16px;
-            margin-top: 8px;
-            border: 1px solid rgba(132, 102, 218, 0.3);
-        }
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, rgba(132, 102, 218, 1) 0%, rgba(180, 150, 255, 1) 100%);
-            text-align: center;
-            line-height: 16px;
-            color: #20202d;
-            font-size: 0.8em;
-            font-weight: bold;
-            border-radius: 8px 0 0 8px; /* Only on the left side if it's a full bar */
-            transition: width 0.5s ease-in-out;
-        }
-        .custom-tabs .tab-item {
-            padding: 10px 15px;
-            font-size: 1.1em;
-        }
-        .custom-tabs .tab-item.active {
-            color: #ffffff;
-            background-color: rgba(132, 102, 218, 0.5);
-        }
-        .status-detail-item {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 8px;
-            background-color: rgba(45, 45, 60, 0.7);
-            border-radius: 6px;
-        }
-        .status-detail-item .label {
-            font-weight: bold;
-            color: #9e86c9;
-            font-size: 0.85em;
-            margin-bottom: 3px;
-        }
-        .status-detail-item .value {
-            color: #dcdcdc;
-            font-size: 0.95em;
-        }
-        .relation-meter {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .relation-meter .label {
-            flex-shrink: 0;
-            font-weight: bold;
-            color: #9e86c9;
-        }
-        .relation-meter .value {
-            color: #dcdcdc;
-            flex-grow: 1;
-            text-align: right;
-        }
-        @media (max-width: 600px) {
-            body { font-size: 13px; padding: 8px; }
-            .status-card { padding: 12px; }
-            .attributes-grid { grid-template-columns: 1fr; gap: 10px; }
-            .info-section h3 { font-size: 1.1em; }
-            .custom-tabs .tab-item { padding: 8px 12px; font-size: 1em; }
-            .status-detail-item { padding: 6px; }
-            .relation-meter { flex-wrap: wrap; }
-            .relation-meter .value { text-align: left; flex-basis: 100%; margin-top: 4px;}
-        }
-    </style>
-</head>
-<body>
-    <div class="status-card-wrapper">
-
-        <div class="status-card custom-tabs">
-            <div class="nav-tabs">
-                <div class="tab-item active" data-tab="tab-kou-zhong" onclick="showTab('tab-kou-zhong', this)">寇仲</div>
-                <div class="tab-item" data-tab="tab-xu-zi-ling" onclick="showTab('tab-xu-zi-ling', this)">徐子陵</div>
-            </div>
-
-            <div id="tab-kou-zhong" class="content-pane active">
-                <div class="info-section">
-                    <h3>寇仲 <span style="font-size: 0.8em; color: #9e86c9;">(扬州混混)</span></h3>
-                    <div class="attributes-grid">
-                        <div class="attribute-item">
-                            <span class="label">气血</span>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 70%;">70%</div>
-                            </div>
-                        </div>
-                        <div class="attribute-item">
-                            <span class="label">心神</span>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 40%;">40%</div>
-                            </div>
-                        </div>
-                        <div class="attribute-item">
-                            <span class="label">异状</span>
-                            <span class="value">饥饿</span>
-                        </div>
-                    </div>
-                    <div class="hint-box" style="margin-top: 15px;">
-                        “子陵，你看咱们这光景，比那逃难的野狗还不如。再这么下去，莫说打天下，便是找点吃的填饱肚子，都成了难事。”
-                    </div>
-                </div>
-                <div class="info-section" style="margin-top: 15px;">
-                    <h3>关键属性</h3>
-                    <div class="attributes-grid">
-                        <div class="status-detail-item">
-                            <span class="label">风骨</span><span class="value">傲骨不屈</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">胆魄</span><span class="value">临危不乱</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">心防</span><span class="value">意志动摇</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">情根</span><span class="value">兄弟情深</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">道魔</span><span class="value">行事随性</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">名节</span><span class="value">初涉江湖</span>
-                        </div>
-                    </div>
-                </div>
-                 <div class="info-section" style="margin-top: 15px;">
-                    <h3>关系</h3>
-                    <div class="relation-meter">
-                        <span class="label">对徐子陵</span>
-                        <div class="progress-bar-container" style="flex-grow: 1;">
-                            <div class="progress-bar" style="width: 90%;"></div>
-                        </div>
-                        <span class="value">生死与共 (90%)</span>
-                    </div>
-                    <div class="relation-meter" style="margin-top: 8px;">
-                        <span class="label">对玩家</span>
-                        <div class="progress-bar-container" style="flex-grow: 1;">
-                            <div class="progress-bar" style="width: 0%;"></div>
-                        </div>
-                        <span class="value">尚待观察 (0%)</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-xu-zi-ling" class="content-pane">
-                <div class="info-section">
-                    <h3>徐子陵 <span style="font-size: 0.8em; color: #9e86c9;">(扬州混混)</span></h3>
-                    <div class="attributes-grid">
-                        <div class="attribute-item">
-                            <span class="label">气血</span>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 60%;">60%</div>
-                            </div>
-                        </div>
-                        <div class="attribute-item">
-                            <span class="label">心神</span>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 60%;">60%</div>
-                            </div>
-                        </div>
-                        <div class="attribute-item">
-                            <span class="label">异状</span>
-                            <span class="value">饥饿, 内力消耗</span>
-                        </div>
-                    </div>
-                    <div class="hint-box" style="margin-top: 15px;">
-                        “仲少，此乃扬州城内，宇文阀的势力遍布此处，我们若贸然行事，恐会引来不必要的麻烦。”
-                    </div>
-                </div>
-                 <div class="info-section" style="margin-top: 15px;">
-                    <h3>关键属性</h3>
-                    <div class="attributes-grid">
-                        <div class="status-detail-item">
-                            <span class="label">风骨</span><span class="value">傲骨凛然</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">胆魄</span><span class="value">临危不乱</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">心防</span><span class="value">坚不可摧</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">情根</span><span class="value">心如古井</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">道魔</span><span class="value">道心通明</span>
-                        </div>
-                        <div class="status-detail-item">
-                            <span class="label">名节</span><span class="value">初涉江湖</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="info-section" style="margin-top: 15px;">
-                    <h3>关系</h3>
-                    <div class="relation-meter">
-                        <span class="label">对寇仲</span>
-                        <div class="progress-bar-container" style="flex-grow: 1;">
-                            <div class="progress-bar" style="width: 90%;"></div>
-                        </div>
-                        <span class="value">生死与共 (90%)</span>
-                    </div>
-                     <div class="relation-meter" style="margin-top: 8px;">
-                        <span class="label">对玩家</span>
-                        <div class="progress-bar-container" style="flex-grow: 1;">
-                            <div class="progress-bar" style="width: 0%;"></div>
-                        </div>
-                        <span class="value">尚待观察 (0%)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="status-card">
-            <div class="info-section">
-                <h3>场景信息</h3>
-                <div class="attributes-grid">
-                    <div class="attribute-item">
-                        <span class="label">时间</span>
-                        <span class="value">大业十二年 夏·申时</span>
-                    </div>
-                    <div class="attribute-item">
-                        <span class="label">天候</span>
-                        <span class="value">暑气蒸人，暮色渐沉</span>
-                    </div>
-                    <div class="attribute-item">
-                        <span class="label">地点</span>
-                        <span class="value">扬州·运河支流旁废弃小艇内</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hint-box">
-                寇仲与徐子陵因生存问题发生分歧，正寻求玩家支持。
-            </div>
-        </div>
-
-    </div>
-
-    <script>
-        function showTab(tabId, buttonElement) {
-            // 找到按钮所在的根容器，以确保操作只在当前UI块内生效
-            const wrapper = buttonElement.closest('.status-card-wrapper');
-            if (!wrapper) return;
-
-            // 获取当前UI块内的所有标签页按钮和内容面板
-            const tabItems = wrapper.querySelectorAll('.tab-item');
-            const contentPanes = wrapper.querySelectorAll('.content-pane');
-
-            // 移除所有按钮的 'active' 类
-            tabItems.forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // 隐藏所有内容面板
-            contentPanes.forEach(pane => {
-                pane.classList.remove('active');
-            });
-
-            // 为被点击的按钮添加 'active' 类
-            buttonElement.classList.add('active');
-
-            // 显示与被点击按钮对应的内容面板
-            const targetPane = wrapper.querySelector('#' + tabId);
-            if (targetPane) {
-                targetPane.classList.add('active');
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            body {
+                font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+                background-color: transparent;
+                color: #e0e0e0;
+                margin: 0;
+                padding: 10px;
+                font-size: 14px;
             }
-        }
-    </script>
-</body>
+            .status-card {
+                background-color: rgba(30, 30, 45, 0.85);
+                border-radius: 12px;
+                border: 1px solid rgba(132, 102, 218, 0.5);
+                padding: 16px;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                margin-bottom: 12px;
+            }
+            .nav-tabs {
+                display: flex;
+                margin-bottom: 15px;
+                border-bottom: 1px solid rgba(132, 102, 218, 0.3);
+                padding-bottom: 8px;
+                overflow-x: auto;
+                gap: 8px;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(132, 102, 218, 0.3) transparent;
+            }
+            .nav-tabs::-webkit-scrollbar {
+                height: 5px;
+            }
+            .nav-tabs::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .nav-tabs::-webkit-scrollbar-thumb {
+                background-color: rgba(132, 102, 218, 0.3);
+                border-radius: 10px;
+            }
+            .tab-item {
+                padding: 8px 12px;
+                cursor: pointer;
+                border-radius: 6px;
+                white-space: nowrap;
+                transition:
+                    background-color 0.3s ease,
+                    color 0.3s ease;
+                font-weight: bold;
+                color: #9e86c9;
+            }
+            .tab-item.active {
+                background-color: rgba(132, 102, 218, 0.4);
+                color: #ffffff;
+            }
+            .content-pane {
+                display: none;
+            }
+            .content-pane.active {
+                display: block;
+            }
+            .info-section h3 {
+                margin: 0 0 12px 0;
+                color: #c5a8ff;
+                font-size: 1.2em;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px dashed rgba(132, 102, 218, 0.3);
+                padding-bottom: 6px;
+            }
+            .attributes-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px;
+            }
+            .attribute-item {
+                background-color: rgba(45, 45, 60, 0.7);
+                padding: 10px;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .attribute-item .label {
+                font-weight: bold;
+                color: #9e86c9;
+                display: block;
+                margin-bottom: 4px;
+                font-size: 0.9em;
+            }
+            .attribute-item .value {
+                color: #dcdcdc;
+                font-size: 1em;
+                word-break: break-word;
+            }
+            .hint-box {
+                background-color: rgba(50, 40, 60, 0.8);
+                border: 1px dashed rgba(132, 102, 218, 0.6);
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 15px;
+                color: #b0a0d0;
+                font-style: italic;
+                position: relative;
+                padding-left: 30px;
+            }
+            .hint-box::before {
+                content: '●';
+                position: absolute;
+                left: 12px;
+                color: #9e86c9;
+                font-size: 1.2em;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            .progress-bar-container {
+                width: 100%;
+                background-color: rgba(45, 45, 60, 0.7);
+                border-radius: 8px;
+                overflow: hidden;
+                height: 16px;
+                margin-top: 8px;
+                border: 1px solid rgba(132, 102, 218, 0.3);
+            }
+            .progress-bar {
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    rgba(132, 102, 218, 1) 0%,
+                    rgba(180, 150, 255, 1) 100%
+                );
+                text-align: center;
+                line-height: 16px;
+                color: #20202d;
+                font-size: 0.8em;
+                font-weight: bold;
+                border-radius: 8px 0 0 8px; /* Only on the left side if it's a full bar */
+                transition: width 0.5s ease-in-out;
+            }
+            .custom-tabs .tab-item {
+                padding: 10px 15px;
+                font-size: 1.1em;
+            }
+            .custom-tabs .tab-item.active {
+                color: #ffffff;
+                background-color: rgba(132, 102, 218, 0.5);
+            }
+            .status-detail-item {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 8px;
+                background-color: rgba(45, 45, 60, 0.7);
+                border-radius: 6px;
+            }
+            .status-detail-item .label {
+                font-weight: bold;
+                color: #9e86c9;
+                font-size: 0.85em;
+                margin-bottom: 3px;
+            }
+            .status-detail-item .value {
+                color: #dcdcdc;
+                font-size: 0.95em;
+            }
+            .relation-meter {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .relation-meter .label {
+                flex-shrink: 0;
+                font-weight: bold;
+                color: #9e86c9;
+            }
+            .relation-meter .value {
+                color: #dcdcdc;
+                flex-grow: 1;
+                text-align: right;
+            }
+            @media (max-width: 600px) {
+                body {
+                    font-size: 13px;
+                    padding: 8px;
+                }
+                .status-card {
+                    padding: 12px;
+                }
+                .attributes-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                }
+                .info-section h3 {
+                    font-size: 1.1em;
+                }
+                .custom-tabs .tab-item {
+                    padding: 8px 12px;
+                    font-size: 1em;
+                }
+                .status-detail-item {
+                    padding: 6px;
+                }
+                .relation-meter {
+                    flex-wrap: wrap;
+                }
+                .relation-meter .value {
+                    text-align: left;
+                    flex-basis: 100%;
+                    margin-top: 4px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="status-card-wrapper">
+            <div class="status-card custom-tabs">
+                <div class="nav-tabs">
+                    <div
+                        class="tab-item active"
+                        data-tab="tab-kou-zhong"
+                        onclick="showTab('tab-kou-zhong', this)"
+                    >
+                        寇仲
+                    </div>
+                    <div
+                        class="tab-item"
+                        data-tab="tab-xu-zi-ling"
+                        onclick="showTab('tab-xu-zi-ling', this)"
+                    >
+                        徐子陵
+                    </div>
+                </div>
+
+                <div id="tab-kou-zhong" class="content-pane active">
+                    <div class="info-section">
+                        <h3>
+                            寇仲
+                            <span style="font-size: 0.8em; color: #9e86c9"
+                                >(扬州混混)</span
+                            >
+                        </h3>
+                        <div class="attributes-grid">
+                            <div class="attribute-item">
+                                <span class="label">气血</span>
+                                <div class="progress-bar-container">
+                                    <div
+                                        class="progress-bar"
+                                        style="width: 70%"
+                                    >
+                                        70%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="attribute-item">
+                                <span class="label">心神</span>
+                                <div class="progress-bar-container">
+                                    <div
+                                        class="progress-bar"
+                                        style="width: 40%"
+                                    >
+                                        40%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="attribute-item">
+                                <span class="label">异状</span>
+                                <span class="value">饥饿</span>
+                            </div>
+                        </div>
+                        <div class="hint-box" style="margin-top: 15px">
+                            “子陵，你看咱们这光景，比那逃难的野狗还不如。再这么下去，莫说打天下，便是找点吃的填饱肚子，都成了难事。”
+                        </div>
+                    </div>
+                    <div class="info-section" style="margin-top: 15px">
+                        <h3>关键属性</h3>
+                        <div class="attributes-grid">
+                            <div class="status-detail-item">
+                                <span class="label">风骨</span
+                                ><span class="value">傲骨不屈</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">胆魄</span
+                                ><span class="value">临危不乱</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">心防</span
+                                ><span class="value">意志动摇</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">情根</span
+                                ><span class="value">兄弟情深</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">道魔</span
+                                ><span class="value">行事随性</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">名节</span
+                                ><span class="value">初涉江湖</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-section" style="margin-top: 15px">
+                        <h3>关系</h3>
+                        <div class="relation-meter">
+                            <span class="label">对徐子陵</span>
+                            <div
+                                class="progress-bar-container"
+                                style="flex-grow: 1"
+                            >
+                                <div
+                                    class="progress-bar"
+                                    style="width: 90%"
+                                ></div>
+                            </div>
+                            <span class="value">生死与共 (90%)</span>
+                        </div>
+                        <div class="relation-meter" style="margin-top: 8px">
+                            <span class="label">对玩家</span>
+                            <div
+                                class="progress-bar-container"
+                                style="flex-grow: 1"
+                            >
+                                <div
+                                    class="progress-bar"
+                                    style="width: 0%"
+                                ></div>
+                            </div>
+                            <span class="value">尚待观察 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-xu-zi-ling" class="content-pane">
+                    <div class="info-section">
+                        <h3>
+                            徐子陵
+                            <span style="font-size: 0.8em; color: #9e86c9"
+                                >(扬州混混)</span
+                            >
+                        </h3>
+                        <div class="attributes-grid">
+                            <div class="attribute-item">
+                                <span class="label">气血</span>
+                                <div class="progress-bar-container">
+                                    <div
+                                        class="progress-bar"
+                                        style="width: 60%"
+                                    >
+                                        60%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="attribute-item">
+                                <span class="label">心神</span>
+                                <div class="progress-bar-container">
+                                    <div
+                                        class="progress-bar"
+                                        style="width: 60%"
+                                    >
+                                        60%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="attribute-item">
+                                <span class="label">异状</span>
+                                <span class="value">饥饿, 内力消耗</span>
+                            </div>
+                        </div>
+                        <div class="hint-box" style="margin-top: 15px">
+                            “仲少，此乃扬州城内，宇文阀的势力遍布此处，我们若贸然行事，恐会引来不必要的麻烦。”
+                        </div>
+                    </div>
+                    <div class="info-section" style="margin-top: 15px">
+                        <h3>关键属性</h3>
+                        <div class="attributes-grid">
+                            <div class="status-detail-item">
+                                <span class="label">风骨</span
+                                ><span class="value">傲骨凛然</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">胆魄</span
+                                ><span class="value">临危不乱</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">心防</span
+                                ><span class="value">坚不可摧</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">情根</span
+                                ><span class="value">心如古井</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">道魔</span
+                                ><span class="value">道心通明</span>
+                            </div>
+                            <div class="status-detail-item">
+                                <span class="label">名节</span
+                                ><span class="value">初涉江湖</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-section" style="margin-top: 15px">
+                        <h3>关系</h3>
+                        <div class="relation-meter">
+                            <span class="label">对寇仲</span>
+                            <div
+                                class="progress-bar-container"
+                                style="flex-grow: 1"
+                            >
+                                <div
+                                    class="progress-bar"
+                                    style="width: 90%"
+                                ></div>
+                            </div>
+                            <span class="value">生死与共 (90%)</span>
+                        </div>
+                        <div class="relation-meter" style="margin-top: 8px">
+                            <span class="label">对玩家</span>
+                            <div
+                                class="progress-bar-container"
+                                style="flex-grow: 1"
+                            >
+                                <div
+                                    class="progress-bar"
+                                    style="width: 0%"
+                                ></div>
+                            </div>
+                            <span class="value">尚待观察 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="info-section">
+                    <h3>场景信息</h3>
+                    <div class="attributes-grid">
+                        <div class="attribute-item">
+                            <span class="label">时间</span>
+                            <span class="value">大业十二年 夏·申时</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span class="label">天候</span>
+                            <span class="value">暑气蒸人，暮色渐沉</span>
+                        </div>
+                        <div class="attribute-item">
+                            <span class="label">地点</span>
+                            <span class="value">扬州·运河支流旁废弃小艇内</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hint-box">
+                    寇仲与徐子陵因生存问题发生分歧，正寻求玩家支持。
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function showTab(tabId, buttonElement) {
+                // 找到按钮所在的根容器，以确保操作只在当前UI块内生效
+                const wrapper = buttonElement.closest('.status-card-wrapper');
+                if (!wrapper) return;
+
+                // 获取当前UI块内的所有标签页按钮和内容面板
+                const tabItems = wrapper.querySelectorAll('.tab-item');
+                const contentPanes = wrapper.querySelectorAll('.content-pane');
+
+                // 移除所有按钮的 'active' 类
+                tabItems.forEach((item) => {
+                    item.classList.remove('active');
+                });
+
+                // 隐藏所有内容面板
+                contentPanes.forEach((pane) => {
+                    pane.classList.remove('active');
+                });
+
+                // 为被点击的按钮添加 'active' 类
+                buttonElement.classList.add('active');
+
+                // 显示与被点击按钮对应的内容面板
+                const targetPane = wrapper.querySelector('#' + tabId);
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                }
+            }
+        </script>
+    </body>
 </html>
